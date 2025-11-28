@@ -19,6 +19,24 @@ export const trpcClient = trpc.createClient({
     httpLink({
       url: `${getBaseUrl()}/api/trpc`,
       transformer: superjson,
+      fetch: async (url, options) => {
+        console.log('[tRPC] Fetching:', url);
+        try {
+          const response = await fetch(url, options);
+          console.log('[tRPC] Response status:', response.status);
+          
+          if (!response.ok) {
+            const text = await response.text();
+            console.error('[tRPC] Error response:', text.substring(0, 500));
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          
+          return response;
+        } catch (error) {
+          console.error('[tRPC] Fetch error:', error);
+          throw error;
+        }
+      },
     }),
   ],
 });

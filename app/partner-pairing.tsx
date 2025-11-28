@@ -27,10 +27,14 @@ export default function PartnerPairingScreen() {
   const handleGenerateCode = async () => {
     try {
       setError('');
+      console.log('[PartnerPairing] Attempting to generate code...');
       await generateCode();
+      console.log('[PartnerPairing] Code generated successfully');
     } catch (err: any) {
-      setError(err.message || 'Failed to generate code');
-      Alert.alert('Error', err.message || 'Failed to generate code');
+      console.error('[PartnerPairing] Error:', err);
+      const errorMessage = err.message || err.toString() || 'Failed to generate code';
+      setError(errorMessage);
+      Alert.alert('Error', errorMessage);
     }
   };
 

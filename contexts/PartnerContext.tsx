@@ -53,7 +53,14 @@ export const [PartnerProvider, usePartner] = createContextHook(() => {
     if (!user?.id) {
       throw new Error('User not authenticated');
     }
-    await generateCodeMutation.mutateAsync({ userId: user.id });
+    try {
+      console.log('[PartnerContext] Generating code for user:', user.id);
+      await generateCodeMutation.mutateAsync({ userId: user.id });
+      console.log('[PartnerContext] Code generated successfully');
+    } catch (error) {
+      console.error('[PartnerContext] Error generating code:', error);
+      throw error;
+    }
   };
 
   const acceptCode = async (code: string) => {
