@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Heart } from "lucide-react-native";
+import { Heart, Target, Gift, Sparkles, Camera, Settings, Users, Lightbulb, Gamepad2, MessageSquare, ShieldQuestion, Zap } from "lucide-react-native";
 import React from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 
@@ -34,18 +34,84 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <Heart color={color} size={size} fill={color} />,
         }}
       />
+      <Tabs.Screen
+        name="goals"
+        options={{
+          title: "Goals",
+          tabBarIcon: ({ color, size }) => <Target color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="love-bank"
+        options={{
+          title: "Love Bank",
+          tabBarIcon: ({ color, size }) => <Gift color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="spark"
+        options={{
+          title: "Spark",
+          tabBarIcon: ({ color, size }) => <Sparkles color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="memories"
+        options={{
+          title: "Memories",
+          tabBarIcon: ({ color, size }) => <Camera color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="compatibility"
+        options={{
+          title: "Match",
+          tabBarIcon: ({ color, size }) => <Users color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="vision-board"
+        options={{
+          title: "Vision",
+          tabBarIcon: ({ color, size }) => <Lightbulb color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="games"
+        options={{
+          title: "Games",
+          tabBarIcon: ({ color, size }) => <Gamepad2 color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="conversations"
+        options={{
+          title: "Talk",
+          tabBarIcon: ({ color, size }) => <MessageSquare color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="conflict-repair"
+        options={{
+          title: "Repair",
+          tabBarIcon: ({ color, size }) => <ShieldQuestion color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="spark-challenges"
+        options={{
+          title: "Challenges",
+          tabBarIcon: ({ color, size }) => <Zap color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "Settings",
+          tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />,
+        }}
+      />
       <Tabs.Screen name="menu" options={{ href: null }} />
-      <Tabs.Screen name="goals" options={{ href: null }} />
-      <Tabs.Screen name="love-bank" options={{ href: null }} />
-      <Tabs.Screen name="spark" options={{ href: null }} />
-      <Tabs.Screen name="memories" options={{ href: null }} />
-      <Tabs.Screen name="compatibility" options={{ href: null }} />
-      <Tabs.Screen name="vision-board" options={{ href: null }} />
-      <Tabs.Screen name="games" options={{ href: null }} />
-      <Tabs.Screen name="conversations" options={{ href: null }} />
-      <Tabs.Screen name="conflict-repair" options={{ href: null }} />
-      <Tabs.Screen name="spark-challenges" options={{ href: null }} />
-      <Tabs.Screen name="settings" options={{ href: null }} />
     </Tabs>
   );
 }
