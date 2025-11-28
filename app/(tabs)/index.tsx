@@ -1,12 +1,17 @@
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Modal, Alert } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Heart, Target, Calendar, TrendingUp, Smile, Meh, Frown, Zap, Battery, Briefcase, Flame, History } from "lucide-react-native";
+import { Heart, Target, Calendar, TrendingUp, Smile, Meh, Frown, Zap, Battery, Briefcase, Flame, History, Camera, ImageIcon, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useState, useEffect } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useStreak } from "@/contexts/StreakContext";
 import { useMood, MoodType } from "@/contexts/MoodContext";
 import MoodHistoryModal from "@/components/MoodHistoryModal";
+import { useRouter } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
+import { useMutation } from "@tanstack/react-query";
+import { analyzeImage } from "@/constants/gemini";
+import { usePhotoStorage } from "@/contexts/PhotoStorageContext";
 
 export default function HeartbeatScreen() {
   const insets = useSafeAreaInsets();
@@ -15,6 +20,9 @@ export default function HeartbeatScreen() {
   const { currentMood, recordMood, moodHistory } = useMood();
   const [partnerMood] = useState<MoodType>("happy");
   const [showMoodHistory, setShowMoodHistory] = useState(false);
+  const [showAddMemoryModal, setShowAddMemoryModal] = useState(false);
+  const router = useRouter();
+  const { addPhoto } = usePhotoStorage();
 
   useEffect(() => {
     recordActivity();
@@ -37,6 +45,86 @@ export default function HeartbeatScreen() {
 
   const handleMoodPress = async (mood: MoodType) => {
     await recordMood(mood);
+  };
+
+  const analyzeMutation = useMutation({
+    mutationFn: async (imageUri: string) => {
+      console.log("Analyzing image with Gemini:", imageUri);
+      return await analyzeImage(imageUri);
+    },
+    onSuccess: async (data, imageUri) => {
+      console.log("Analysis complete:", data);
+      await addPhoto({
+        uri: imageUri,
+        caption: data.caption,
+        category: "memory",
+        description: data.description,
+        mood: data.mood,
+        tags: data.suggestedTags,
+        relationshipMoment: data.relationshipMoment,
+      });
+      Alert.alert("Memory Added!", "Your memory has been saved successfully.");
+    },
+    onError: (error) => {
+      console.error("Analysis error:", error);
+      Alert.alert("Analysis Failed", "Could not analyze the image. Please try again.");
+    },
+  });
+
+  const pickImage = async () => {
+    console.log("Picking image...");
+    setShowAddMemoryModal(false);
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    console.log("Permission status:", status);
+
+    if (status !== "granted") {
+      console.log("Permission denied");
+      Alert.alert("Permission Required", "Please grant photo library access to add memories.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: "images" as any,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    console.log("Image picker result:", result);
+
+    if (!result.canceled && result.assets[0]) {
+      analyzeMutation.mutate(result.assets[0].uri);
+    }
+  };
+
+  const takePicture = async () => {
+    console.log("Taking picture...");
+    setShowAddMemoryModal(false);
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    console.log("Camera permission status:", status);
+
+    if (status !== "granted") {
+      console.log("Permission denied");
+      Alert.alert("Permission Required", "Please grant camera access to take photos.");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    console.log("Camera result:", result);
+
+    if (!result.canceled && result.assets[0]) {
+      analyzeMutation.mutate(result.assets[0].uri);
+    }
+  };
+
+  const handleGetIdea = () => {
+    console.log("Navigating to Spark tab");
+    router.push("/spark");
   };
 
   const MoodButton = ({ mood, icon: Icon, label, isSelected, onPress }: any) => (
@@ -245,10 +333,16 @@ export default function HeartbeatScreen() {
         </View>
 
         <View style={styles.quickActions}>
-          <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.deepSlate }]}>
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: colors.deepSlate }]}
+            onPress={() => setShowAddMemoryModal(true)}
+          >
             <Text style={[styles.actionButtonText, { color: colors.white }]}>📝 Add Memory</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.deepSlate }]}>
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: colors.deepSlate }]}
+            onPress={handleGetIdea}
+          >
             <Text style={[styles.actionButtonText, { color: colors.white }]}>💡 Get Idea</Text>
           </TouchableOpacity>
         </View>
@@ -261,6 +355,44 @@ export default function HeartbeatScreen() {
         onClose={() => setShowMoodHistory(false)}
         moodHistory={moodHistory}
       />
+
+      <Modal
+        visible={showAddMemoryModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowAddMemoryModal(false)}
+      >
+        <View style={styles.pickerModalOverlay}>
+          <View style={[styles.pickerModalContent, { backgroundColor: colors.white }]}>
+            <View style={styles.pickerHeader}>
+              <Text style={[styles.pickerTitle, { color: colors.textPrimary }]}>Add Memory</Text>
+              <TouchableOpacity onPress={() => setShowAddMemoryModal(false)}>
+                <X size={24} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            
+            <TouchableOpacity style={[styles.pickerOption, { backgroundColor: colors.lightGray }]} onPress={takePicture}>
+              <View style={[styles.pickerIconContainer, { backgroundColor: colors.white }]}>
+                <Camera size={28} color={colors.accentRose} />
+              </View>
+              <View style={styles.pickerTextContainer}>
+                <Text style={[styles.pickerOptionTitle, { color: colors.textPrimary }]}>Take Photo</Text>
+                <Text style={[styles.pickerOptionSubtitle, { color: colors.textSecondary }]}>Capture a new memory with camera</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.pickerOption, { backgroundColor: colors.lightGray }]} onPress={pickImage}>
+              <View style={[styles.pickerIconContainer, { backgroundColor: colors.white }]}>
+                <ImageIcon size={28} color={colors.accentRose} />
+              </View>
+              <View style={styles.pickerTextContainer}>
+                <Text style={[styles.pickerOptionTitle, { color: colors.textPrimary }]}>Choose from Library</Text>
+                <Text style={[styles.pickerOptionSubtitle, { color: colors.textSecondary }]}>Upload an existing photo</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -537,5 +669,52 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 15,
     fontWeight: "600" as const,
+  },
+  pickerModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "flex-end",
+  },
+  pickerModalContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  pickerHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 24,
+  },
+  pickerTitle: {
+    fontSize: 24,
+    fontWeight: "700" as const,
+  },
+  pickerOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 12,
+  },
+  pickerIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 16,
+  },
+  pickerTextContainer: {
+    flex: 1,
+  },
+  pickerOptionTitle: {
+    fontSize: 18,
+    fontWeight: "600" as const,
+    marginBottom: 4,
+  },
+  pickerOptionSubtitle: {
+    fontSize: 14,
   },
 });
