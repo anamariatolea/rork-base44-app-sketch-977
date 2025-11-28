@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STORAGE_KEY = 'supabase.auth.token';
+const LOCAL_USER_KEY = 'local.user.id';
 
 interface AuthState {
   user: User | null;
@@ -32,10 +33,26 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
     const initializeAuth = async () => {
       if (!isSupabaseConfigured || !supabase) {
-        console.warn('Supabase is not configured. Please add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to your .env file.');
+        console.warn('Supabase is not configured. Using local demo mode.');
+        
+        let localUserId = await AsyncStorage.getItem(LOCAL_USER_KEY);
+        if (!localUserId) {
+          localUserId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          await AsyncStorage.setItem(LOCAL_USER_KEY, localUserId);
+        }
+
+        const mockUser: User = {
+          id: localUserId,
+          app_metadata: {},
+          user_metadata: {},
+          aud: 'authenticated',
+          created_at: new Date().toISOString(),
+          email: 'demo@example.com',
+        } as User;
+
         if (mounted) {
           setAuthState({
-            user: null,
+            user: mockUser,
             session: null,
             loading: false,
             initialized: true,

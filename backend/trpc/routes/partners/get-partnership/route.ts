@@ -1,6 +1,7 @@
 import { publicProcedure } from "../../../create-context";
 import { z } from "zod";
 import { supabase, isSupabaseConfigured } from "../../../../lib/supabase";
+import { findPartnershipByUserId, getProfile } from "../../../../lib/local-partnerships";
 
 export const getPartnershipProcedure = publicProcedure
   .input(
@@ -12,8 +13,36 @@ export const getPartnershipProcedure = publicProcedure
     console.log('[getPartnership] Fetching partnership for user:', input.userId);
 
     if (!isSupabaseConfigured) {
-      console.error('[getPartnership] Supabase not configured');
-      return null;
+      console.log('[getPartnership] Supabase not configured, using local storage');
+      
+      const partnership = findPartnershipByUserId(input.userId);
+      
+      if (!partnership) {
+        console.log('[getPartnership] No partnership found (local)');
+        return null;
+      }
+
+      const partnerId = partnership.user2_id;
+
+      if (!partnerId) {
+        console.log('[getPartnership] Partnership exists but not paired yet (local)');
+        return {
+          isPaired: false,
+          pairingCode: partnership.pairing_code,
+          codeExpiresAt: partnership.code_expires_at,
+        };
+      }
+
+      const profile = getProfile(partnerId);
+
+      console.log('[getPartnership] Found partner (local):', partnerId);
+      return {
+        isPaired: true,
+        partnerId,
+        partnerEmail: profile?.email || 'partner@example.com',
+        partnerName: profile?.display_name || 'Your Partner',
+        pairedAt: partnership.paired_at,
+      };
     }
 
     const { data: partnership, error } = await supabase

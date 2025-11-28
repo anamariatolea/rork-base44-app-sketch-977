@@ -1,6 +1,7 @@
 import { publicProcedure } from "../../../create-context";
 import { z } from "zod";
 import { supabase, isSupabaseConfigured } from "../../../../lib/supabase";
+import { deletePartnership } from "../../../../lib/local-partnerships";
 
 export const unlinkPartnerProcedure = publicProcedure
   .input(
@@ -12,8 +13,12 @@ export const unlinkPartnerProcedure = publicProcedure
     console.log('[unlinkPartner] Unlinking partner for user:', input.userId);
 
     if (!isSupabaseConfigured) {
-      console.error('[unlinkPartner] Supabase not configured');
-      throw new Error('Database not configured. Please set up Supabase credentials in your environment variables.');
+      console.log('[unlinkPartner] Supabase not configured, using local storage');
+      
+      deletePartnership(input.userId);
+
+      console.log('[unlinkPartner] Successfully unlinked (local)');
+      return { success: true };
     }
 
     const { error } = await supabase

@@ -1,6 +1,7 @@
 import { publicProcedure } from "../../../create-context";
 import { z } from "zod";
 import { supabase, isSupabaseConfigured } from "../../../../lib/supabase";
+import { findPartnershipByUserId, updatePartnership } from "../../../../lib/local-partnerships";
 
 function generatePairingCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -21,8 +22,30 @@ export const generateCodeProcedure = publicProcedure
     console.log('[generateCode] Starting for user:', input.userId);
 
     if (!isSupabaseConfigured) {
-      console.error('[generateCode] Supabase not configured');
-      throw new Error('Database not configured. Please set up Supabase credentials in your environment variables.');
+      console.log('[generateCode] Supabase not configured, using local storage');
+      
+      const existingPartnership = findPartnershipByUserId(input.userId);
+      if (existingPartnership && existingPartnership.user2_id) {
+        throw new Error('You already have a partner. Please unlink first.');
+      }
+
+      const code = generatePairingCode();
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
+
+      updatePartnership(input.userId, {
+        user1_id: input.userId,
+        user2_id: null,
+        pairing_code: code,
+        code_expires_at: expiresAt.toISOString(),
+        paired_at: null,
+      });
+
+      console.log('[generateCode] Successfully generated code (local):', code);
+      return {
+        code,
+        expiresAt: expiresAt.toISOString(),
+      };
     }
 
     const code = generatePairingCode();

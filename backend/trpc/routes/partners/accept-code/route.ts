@@ -1,6 +1,7 @@
 import { publicProcedure } from "../../../create-context";
 import { z } from "zod";
 import { supabase, isSupabaseConfigured } from "../../../../lib/supabase";
+import { findPartnershipByCode, findPartnershipByUserId, updatePartnership, setProfile } from "../../../../lib/local-partnerships";
 
 export const acceptCodeProcedure = publicProcedure
   .input(
@@ -13,8 +14,43 @@ export const acceptCodeProcedure = publicProcedure
     console.log('[acceptCode] User', input.userId, 'attempting to use code:', input.code);
 
     if (!isSupabaseConfigured) {
-      console.error('[acceptCode] Supabase not configured');
-      throw new Error('Database not configured. Please set up Supabase credentials in your environment variables.');
+      console.log('[acceptCode] Supabase not configured, using local storage');
+      
+      const existingPartnership = findPartnershipByUserId(input.userId);
+      if (existingPartnership && existingPartnership.user2_id) {
+        throw new Error('You already have a partner. Please unlink first.');
+      }
+
+      const codeMatch = findPartnershipByCode(input.code);
+      if (!codeMatch) {
+        throw new Error('Invalid pairing code');
+      }
+
+      if (codeMatch.userId === input.userId) {
+        throw new Error('You cannot use your own pairing code');
+      }
+
+      const expiresAt = new Date(codeMatch.partnership.code_expires_at);
+      if (expiresAt < new Date()) {
+        throw new Error('This pairing code has expired');
+      }
+
+      updatePartnership(codeMatch.userId, {
+        ...codeMatch.partnership,
+        user2_id: input.userId,
+        paired_at: new Date().toISOString(),
+      });
+
+      setProfile(input.userId, {
+        email: 'you@example.com',
+        display_name: 'You',
+      });
+
+      console.log('[acceptCode] Successfully paired users (local)');
+      return {
+        success: true,
+        partnerId: codeMatch.userId,
+      };
     }
 
     const { data: existingPartnership, error: checkError } = await supabase
