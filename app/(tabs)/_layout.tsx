@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Heart, Target, Gift, Sparkles, Camera, Settings, Users, Lightbulb, Gamepad2, MessageSquare, ShieldQuestion, Zap } from "lucide-react-native";
+import { Heart, Target, Gift, Sparkles, Camera, Settings, Users, Lightbulb, Gamepad2, MessageSquare, ShieldQuestion, Zap, UsersRound } from "lucide-react-native";
 import React from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 
@@ -102,6 +102,13 @@ export default function TabLayout() {
         options={{
           title: "Challenges",
           tabBarIcon: ({ color, size }) => <Zap color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="communities"
+        options={{
+          title: "Communities",
+          tabBarIcon: ({ color, size }) => <UsersRound color={color} size={size} />,
         }}
       />
       <Tabs.Screen
