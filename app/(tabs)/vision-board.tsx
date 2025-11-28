@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, Modal } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Lightbulb, Plus, MapPin, Calendar, TrendingUp, X, Trash2 } from "lucide-react-native";
+import { Lightbulb, Plus, MapPin, Calendar, TrendingUp, X, Trash2, Pin } from "lucide-react-native";
 import { useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 
@@ -12,6 +12,7 @@ type VisionItem = {
   description: string;
   category: VisionCategory;
   createdAt: Date;
+  isPinned?: boolean;
 };
 
 const categoryInfo = {
@@ -80,6 +81,15 @@ export default function VisionBoardScreen() {
     );
   };
 
+  const handleTogglePin = (id: string) => {
+    setItems(items.map(item => 
+      item.id === id ? { ...item, isPinned: !item.isPinned } : item
+    ));
+  };
+
+  const pinnedItems = items.filter(item => item.isPinned);
+  const unpinnedItems = items.filter(item => !item.isPinned);
+
   const renderVisionItem = (item: VisionItem) => {
     const categoryData = categoryInfo[item.category];
     const Icon = categoryData.icon;
@@ -87,7 +97,11 @@ export default function VisionBoardScreen() {
     return (
       <View
         key={item.id}
-        style={[styles.visionItem, { backgroundColor: colors.white, shadowColor: colors.deepSlate }]}
+        style={[
+          styles.visionItem,
+          { backgroundColor: colors.white, shadowColor: colors.deepSlate },
+          item.isPinned && styles.visionItemPinned,
+        ]}
       >
         <View style={styles.itemHeader}>
           <View style={[styles.categoryBadge, { backgroundColor: categoryData.color + "20" }]}>
@@ -96,9 +110,24 @@ export default function VisionBoardScreen() {
               {categoryData.label}
             </Text>
           </View>
-          <TouchableOpacity onPress={() => handleDeleteItem(item.id)}>
-            <Trash2 size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
+          <View style={styles.itemActions}>
+            <TouchableOpacity 
+              onPress={() => handleTogglePin(item.id)}
+              style={styles.actionButton}
+            >
+              <Pin 
+                size={20} 
+                color={item.isPinned ? colors.accentRose : colors.textSecondary}
+                fill={item.isPinned ? colors.accentRose : "none"}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={() => handleDeleteItem(item.id)}
+              style={styles.actionButton}
+            >
+              <Trash2 size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
         </View>
         <Text style={[styles.itemTitle, { color: colors.textPrimary }]}>{item.title}</Text>
         {item.description && (
@@ -150,9 +179,29 @@ export default function VisionBoardScreen() {
             </Text>
           </View>
         ) : (
-          <View style={styles.itemsContainer}>
-            {items.map(renderVisionItem)}
-          </View>
+          <>
+            {pinnedItems.length > 0 && (
+              <View style={styles.sectionContainer}>
+                <View style={styles.sectionHeaderRow}>
+                  <Pin size={20} color={colors.accentRose} />
+                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Pinned</Text>
+                </View>
+                <View style={styles.itemsContainer}>
+                  {pinnedItems.map(renderVisionItem)}
+                </View>
+              </View>
+            )}
+            {unpinnedItems.length > 0 && (
+              <View style={styles.sectionContainer}>
+                {pinnedItems.length > 0 && (
+                  <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 12 }]}>All Items</Text>
+                )}
+                <View style={styles.itemsContainer}>
+                  {unpinnedItems.map(renderVisionItem)}
+                </View>
+              </View>
+            )}
+          </>
         )}
 
         <View style={{ height: 40 }} />
@@ -335,6 +384,30 @@ const styles = StyleSheet.create({
   itemDescription: {
     fontSize: 15,
     lineHeight: 22,
+  },
+  visionItemPinned: {
+    borderWidth: 2,
+    borderColor: "rgba(236, 72, 153, 0.3)",
+  },
+  itemActions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  actionButton: {
+    padding: 4,
+  },
+  sectionContainer: {
+    marginBottom: 24,
+  },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700" as const,
   },
   modalOverlay: {
     flex: 1,

@@ -1,6 +1,6 @@
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Modal, TextInput, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Plus, CheckCircle2, Circle, Calendar as CalendarIcon, Star } from "lucide-react-native";
+import { Plus, CheckCircle2, Circle, Calendar as CalendarIcon, Star, X, Trash2 } from "lucide-react-native";
 import { useState } from "react";
 import Colors from "@/constants/colors";
 
@@ -16,8 +16,10 @@ type Goal = {
 export default function GoalsScreen() {
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<"daily" | "weekly" | "yearly">("daily");
-
-  const goals: Goal[] = [
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newGoalTitle, setNewGoalTitle] = useState("");
+  const [newGoalDescription, setNewGoalDescription] = useState("");
+  const [goals, setGoals] = useState<Goal[]>([
     {
       id: 1,
       title: "Morning text",
@@ -92,7 +94,46 @@ export default function GoalsScreen() {
       category: "yearly",
       completed: false,
     },
-  ];
+  ]);
+
+  const handleAddGoal = () => {
+    if (!newGoalTitle.trim()) {
+      Alert.alert("Title Required", "Please enter a title for your goal.");
+      return;
+    }
+
+    const newGoal: Goal = {
+      id: Date.now(),
+      title: newGoalTitle,
+      description: newGoalDescription,
+      category: activeTab,
+      completed: false,
+    };
+
+    setGoals([...goals, newGoal]);
+    setNewGoalTitle("");
+    setNewGoalDescription("");
+    setShowAddModal(false);
+  };
+
+  const handleToggleGoal = (id: number) => {
+    setGoals(goals.map(g => g.id === id ? { ...g, completed: !g.completed } : g));
+  };
+
+  const handleDeleteGoal = (id: number) => {
+    Alert.alert(
+      "Delete Goal",
+      "Are you sure you want to delete this goal?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => setGoals(goals.filter(g => g.id !== id)),
+        },
+      ]
+    );
+  };
 
   const filteredGoals = goals.filter((g) => g.category === activeTab);
   const completedCount = filteredGoals.filter((g) => g.completed).length;
@@ -114,7 +155,7 @@ export default function GoalsScreen() {
 
   const GoalCard = ({ goal }: { goal: Goal }) => (
     <View style={styles.goalCard}>
-      <TouchableOpacity style={styles.goalCheckbox}>
+      <TouchableOpacity style={styles.goalCheckbox} onPress={() => handleToggleGoal(goal.id)}>
         {goal.completed ? (
           <CheckCircle2 size={28} color={Colors.success} fill={Colors.success} />
         ) : (
@@ -137,6 +178,9 @@ export default function GoalsScreen() {
           </View>
         )}
       </View>
+      <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeleteGoal(goal.id)}>
+        <Trash2 size={20} color={Colors.textSecondary} />
+      </TouchableOpacity>
     </View>
   );
 
@@ -180,13 +224,58 @@ export default function GoalsScreen() {
           <GoalCard key={goal.id} goal={goal} />
         ))}
 
-        <TouchableOpacity style={styles.addButton}>
+        <TouchableOpacity style={styles.addButton} onPress={() => setShowAddModal(true)}>
           <Plus size={24} color={Colors.white} />
           <Text style={styles.addButtonText}>Add New Goal</Text>
         </TouchableOpacity>
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      <Modal
+        visible={showAddModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowAddModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add New Goal</Text>
+              <TouchableOpacity onPress={() => setShowAddModal(false)}>
+                <X size={24} color={Colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.label}>Category: {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</Text>
+
+            <Text style={styles.label}>Title</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g., Morning text, Date night"
+              placeholderTextColor={Colors.mediumGray}
+              value={newGoalTitle}
+              onChangeText={setNewGoalTitle}
+            />
+
+            <Text style={styles.label}>Description</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="Add details about your goal..."
+              placeholderTextColor={Colors.mediumGray}
+              value={newGoalDescription}
+              onChangeText={setNewGoalDescription}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
+
+            <TouchableOpacity style={styles.saveButton} onPress={handleAddGoal}>
+              <Text style={styles.saveButtonText}>Add Goal</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -331,5 +420,62 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 16,
     fontWeight: "600" as const,
+  },
+  deleteButton: {
+    padding: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: "700" as const,
+    color: Colors.textPrimary,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+    color: Colors.textPrimary,
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  input: {
+    backgroundColor: Colors.lightGray,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: Colors.textPrimary,
+    marginBottom: 16,
+  },
+  textArea: {
+    minHeight: 100,
+    textAlignVertical: "top",
+  },
+  saveButton: {
+    backgroundColor: Colors.accentRose,
+    paddingVertical: 18,
+    borderRadius: 16,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  saveButtonText: {
+    color: Colors.white,
+    fontSize: 18,
+    fontWeight: "700" as const,
   },
 });

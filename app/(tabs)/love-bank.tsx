@@ -1,7 +1,8 @@
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Modal, TextInput, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Coins, Coffee, UtensilsCrossed, Sparkles, Home, Music, Heart } from "lucide-react-native";
+import { Coins, Coffee, UtensilsCrossed, Sparkles, Home, Music, Heart, X, Trash2, Gift } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useState } from "react";
 import Colors from "@/constants/colors";
 
 type Reward = {
@@ -13,12 +14,28 @@ type Reward = {
   category: string;
 };
 
+const iconOptions = [
+  { name: "Coffee", component: Coffee },
+  { name: "Food", component: UtensilsCrossed },
+  { name: "Sparkles", component: Sparkles },
+  { name: "Home", component: Home },
+  { name: "Music", component: Music },
+  { name: "Heart", component: Heart },
+  { name: "Gift", component: Gift },
+];
+
 export default function LoveBankScreen() {
   const insets = useSafeAreaInsets();
   const myPoints = 125;
   const partnerPoints = 98;
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newRewardTitle, setNewRewardTitle] = useState("");
+  const [newRewardDescription, setNewRewardDescription] = useState("");
+  const [newRewardPoints, setNewRewardPoints] = useState("");
+  const [newRewardCategory, setNewRewardCategory] = useState("");
+  const [selectedIcon, setSelectedIcon] = useState(0);
 
-  const rewards: Reward[] = [
+  const [rewards, setRewards] = useState<Reward[]>([
     {
       id: 1,
       title: "Morning Coffee",
@@ -67,17 +84,57 @@ export default function LoveBankScreen() {
       icon: Heart,
       category: "Adventures",
     },
-  ];
+  ]);
+
+  const handleAddReward = () => {
+    if (!newRewardTitle.trim()) {
+      Alert.alert("Title Required", "Please enter a title for your reward.");
+      return;
+    }
+    if (!newRewardPoints.trim() || isNaN(Number(newRewardPoints))) {
+      Alert.alert("Points Required", "Please enter a valid number of points.");
+      return;
+    }
+
+    const newReward: Reward = {
+      id: Date.now(),
+      title: newRewardTitle,
+      description: newRewardDescription,
+      points: Number(newRewardPoints),
+      icon: iconOptions[selectedIcon].component,
+      category: newRewardCategory || "Custom",
+    };
+
+    setRewards([...rewards, newReward]);
+    setNewRewardTitle("");
+    setNewRewardDescription("");
+    setNewRewardPoints("");
+    setNewRewardCategory("");
+    setSelectedIcon(0);
+    setShowAddModal(false);
+  };
+
+  const handleDeleteReward = (id: number) => {
+    Alert.alert(
+      "Delete Reward",
+      "Are you sure you want to delete this reward?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => setRewards(rewards.filter(r => r.id !== id)),
+        },
+      ]
+    );
+  };
 
   const RewardCard = ({ reward }: { reward: Reward }) => {
     const Icon = reward.icon;
     const canAfford = myPoints >= reward.points;
 
     return (
-      <TouchableOpacity
-        style={[styles.rewardCard, !canAfford && styles.rewardCardDisabled]}
-        disabled={!canAfford}
-      >
+      <View style={[styles.rewardCard, !canAfford && styles.rewardCardDisabled]}>
         <View style={styles.rewardIcon}>
           <Icon size={28} color={canAfford ? Colors.accentRose : Colors.textSecondary} />
         </View>
@@ -96,7 +153,10 @@ export default function LoveBankScreen() {
             </View>
           </View>
         </View>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeleteReward(reward.id)}>
+          <Trash2 size={20} color={Colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -146,12 +206,87 @@ export default function LoveBankScreen() {
           <RewardCard key={reward.id} reward={reward} />
         ))}
 
-        <TouchableOpacity style={styles.addRewardButton}>
+        <TouchableOpacity style={styles.addRewardButton} onPress={() => setShowAddModal(true)}>
           <Text style={styles.addRewardText}>+ Add Custom Reward</Text>
         </TouchableOpacity>
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      <Modal
+        visible={showAddModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowAddModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add Custom Reward</Text>
+              <TouchableOpacity onPress={() => setShowAddModal(false)}>
+                <X size={24} color={Colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.label}>Icon</Text>
+            <View style={styles.iconSelector}>
+              {iconOptions.map((iconOption, index) => {
+                const IconComponent = iconOption.component;
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    style={[styles.iconOption, selectedIcon === index && styles.iconOptionSelected]}
+                    onPress={() => setSelectedIcon(index)}
+                  >
+                    <IconComponent size={24} color={selectedIcon === index ? Colors.accentRose : Colors.textSecondary} />
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <Text style={styles.label}>Title</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g., Movie Night, Spa Day"
+              placeholderTextColor={Colors.mediumGray}
+              value={newRewardTitle}
+              onChangeText={setNewRewardTitle}
+            />
+
+            <Text style={styles.label}>Description</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="What does this reward include?"
+              placeholderTextColor={Colors.mediumGray}
+              value={newRewardDescription}
+              onChangeText={setNewRewardDescription}
+            />
+
+            <Text style={styles.label}>Category (Optional)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g., Sweet Gestures, Pampering"
+              placeholderTextColor={Colors.mediumGray}
+              value={newRewardCategory}
+              onChangeText={setNewRewardCategory}
+            />
+
+            <Text style={styles.label}>Points Required</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g., 50"
+              placeholderTextColor={Colors.mediumGray}
+              value={newRewardPoints}
+              onChangeText={setNewRewardPoints}
+              keyboardType="numeric"
+            />
+
+            <TouchableOpacity style={styles.saveButton} onPress={handleAddReward}>
+              <Text style={styles.saveButtonText}>Add Reward</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -316,5 +451,79 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600" as const,
     color: Colors.textSecondary,
+  },
+  deleteButton: {
+    padding: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+    maxHeight: "90%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: "700" as const,
+    color: Colors.textPrimary,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+    color: Colors.textPrimary,
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  input: {
+    backgroundColor: Colors.lightGray,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: Colors.textPrimary,
+    marginBottom: 16,
+  },
+  iconSelector: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    marginBottom: 16,
+  },
+  iconOption: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.lightGray,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  iconOptionSelected: {
+    backgroundColor: Colors.lightRose,
+    borderColor: Colors.accentRose,
+  },
+  saveButton: {
+    backgroundColor: Colors.accentRose,
+    paddingVertical: 18,
+    borderRadius: 16,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  saveButtonText: {
+    color: Colors.white,
+    fontSize: 18,
+    fontWeight: "700" as const,
   },
 });
