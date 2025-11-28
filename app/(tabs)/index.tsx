@@ -1,19 +1,20 @@
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Heart, Target, Calendar, TrendingUp, Smile, Meh, Frown, Zap, Battery, Briefcase, Flame } from "lucide-react-native";
+import { Heart, Target, Calendar, TrendingUp, Smile, Meh, Frown, Zap, Battery, Briefcase, Flame, History } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useState, useEffect } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useStreak } from "@/contexts/StreakContext";
-
-type MoodType = "happy" | "neutral" | "sad" | "tired" | "exciting" | "busy" | null;
+import { useMood, MoodType } from "@/contexts/MoodContext";
+import MoodHistoryModal from "@/components/MoodHistoryModal";
 
 export default function HeartbeatScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { streak, recordActivity } = useStreak();
-  const [myMood, setMyMood] = useState<MoodType>(null);
+  const { currentMood, recordMood, moodHistory, isRecording } = useMood();
   const [partnerMood] = useState<MoodType>("happy");
+  const [showMoodHistory, setShowMoodHistory] = useState(false);
 
   useEffect(() => {
     recordActivity();
@@ -33,6 +34,10 @@ export default function HeartbeatScreen() {
 
   const completedGoals = dailyGoals.filter(g => g.completed).length;
   const totalGoals = dailyGoals.length;
+
+  const handleMoodPress = async (mood: MoodType) => {
+    await recordMood(mood);
+  };
 
   const MoodButton = ({ mood, icon: Icon, label, isSelected, onPress }: any) => (
     <TouchableOpacity
@@ -120,28 +125,37 @@ export default function HeartbeatScreen() {
         </View>
 
         <View style={[styles.moodCard, { backgroundColor: colors.white, shadowColor: colors.deepSlate }]}>
-          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>How are you feeling today?</Text>
+          <View style={styles.moodCardHeader}>
+            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>How are you feeling today?</Text>
+            <TouchableOpacity
+              onPress={() => setShowMoodHistory(true)}
+              style={[styles.historyButton, { backgroundColor: colors.lightGray }]}
+            >
+              <History size={18} color={colors.accentRose} />
+              <Text style={[styles.historyButtonText, { color: colors.accentRose }]}>History</Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.moodButtons}>
             <MoodButton
               mood="happy"
               icon={Smile}
               label="Happy"
-              isSelected={myMood === "happy"}
-              onPress={() => setMyMood("happy")}
+              isSelected={currentMood === "happy"}
+              onPress={() => handleMoodPress("happy")}
             />
             <MoodButton
               mood="neutral"
               icon={Meh}
               label="Okay"
-              isSelected={myMood === "neutral"}
-              onPress={() => setMyMood("neutral")}
+              isSelected={currentMood === "neutral"}
+              onPress={() => handleMoodPress("neutral")}
             />
             <MoodButton
               mood="sad"
               icon={Frown}
               label="Down"
-              isSelected={myMood === "sad"}
-              onPress={() => setMyMood("sad")}
+              isSelected={currentMood === "sad"}
+              onPress={() => handleMoodPress("sad")}
             />
           </View>
           <View style={[styles.moodButtons, { marginTop: 12 }]}>
@@ -149,22 +163,22 @@ export default function HeartbeatScreen() {
               mood="tired"
               icon={Battery}
               label="Tired"
-              isSelected={myMood === "tired"}
-              onPress={() => setMyMood("tired")}
+              isSelected={currentMood === "tired"}
+              onPress={() => handleMoodPress("tired")}
             />
             <MoodButton
               mood="exciting"
               icon={Zap}
               label="Exciting"
-              isSelected={myMood === "exciting"}
-              onPress={() => setMyMood("exciting")}
+              isSelected={currentMood === "exciting"}
+              onPress={() => handleMoodPress("exciting")}
             />
             <MoodButton
               mood="busy"
               icon={Briefcase}
               label="Busy"
-              isSelected={myMood === "busy"}
-              onPress={() => setMyMood("busy")}
+              isSelected={currentMood === "busy"}
+              onPress={() => handleMoodPress("busy")}
             />
           </View>
           {partnerMood && (
@@ -241,6 +255,12 @@ export default function HeartbeatScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      <MoodHistoryModal
+        visible={showMoodHistory}
+        onClose={() => setShowMoodHistory(false)}
+        moodHistory={moodHistory}
+      />
     </View>
   );
 }
@@ -329,6 +349,24 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
+  },
+  moodCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  historyButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    gap: 6,
+  },
+  historyButtonText: {
+    fontSize: 13,
+    fontWeight: "600" as const,
   },
   cardTitle: {
     fontSize: 18,

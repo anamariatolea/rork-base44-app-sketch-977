@@ -11,6 +11,7 @@ import { StreakProvider } from "@/contexts/StreakContext";
 import { PurchaseProvider } from "@/contexts/PurchaseContext";
 import { PhotoStorageProvider } from "@/contexts/PhotoStorageContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { MoodProvider } from "@/contexts/MoodContext";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -59,20 +60,22 @@ export default function RootLayout() {
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-        <LanguageProvider>
-          <ThemeProvider>
-            <PurchaseProvider>
-              <StreakProvider>
-                <PhotoStorageProvider>
-                  <GestureHandlerRootView>
-                    <RootLayoutNav />
-                  </GestureHandlerRootView>
-                </PhotoStorageProvider>
-              </StreakProvider>
-            </PurchaseProvider>
-          </ThemeProvider>
-        </LanguageProvider>
-      </AuthProvider>
+          <LanguageProvider>
+            <ThemeProvider>
+              <PurchaseProvider>
+                <StreakProvider>
+                  <PhotoStorageProvider>
+                    <MoodProvider>
+                      <GestureHandlerRootView>
+                        <RootLayoutNav />
+                      </GestureHandlerRootView>
+                    </MoodProvider>
+                  </PhotoStorageProvider>
+                </StreakProvider>
+              </PurchaseProvider>
+            </ThemeProvider>
+          </LanguageProvider>
+        </AuthProvider>
       </QueryClientProvider>
     </trpc.Provider>
   );

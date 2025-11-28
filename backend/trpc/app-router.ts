@@ -8,6 +8,9 @@ import listPostsProcedure from "./routes/communities/posts/list/route";
 import createPostProcedure from "./routes/communities/posts/create/route";
 import reactToPostProcedure from "./routes/communities/posts/react/route";
 import upsertProfileProcedure from "./routes/users/profile/route";
+import { recordMoodProcedure } from "./routes/moods/record/route";
+import { getMoodHistoryProcedure } from "./routes/moods/history/route";
+import { getLatestMoodProcedure } from "./routes/moods/latest/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -26,6 +29,11 @@ export const appRouter = createTRPCRouter({
   }),
   users: createTRPCRouter({
     profile: upsertProfileProcedure,
+  }),
+  moods: createTRPCRouter({
+    record: recordMoodProcedure,
+    history: getMoodHistoryProcedure,
+    latest: getLatestMoodProcedure,
   }),
 });
 
