@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Heart, Menu } from "lucide-react-native";
+import { Heart } from "lucide-react-native";
 import React from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 
@@ -34,13 +34,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <Heart color={color} size={size} fill={color} />,
         }}
       />
-      <Tabs.Screen
-        name="menu"
-        options={{
-          title: "Menu",
-          tabBarIcon: ({ color, size }) => <Menu color={color} size={size} />,
-        }}
-      />
+      <Tabs.Screen name="menu" options={{ href: null }} />
       <Tabs.Screen name="goals" options={{ href: null }} />
       <Tabs.Screen name="love-bank" options={{ href: null }} />
       <Tabs.Screen name="spark" options={{ href: null }} />
