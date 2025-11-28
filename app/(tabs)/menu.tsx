@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/contexts/ThemeContext";
 import {
   Target,
@@ -35,77 +35,77 @@ export default function MenuScreen() {
       title: "Goals & Rituals",
       description: "Track your relationship goals",
       icon: Target,
-      route: "/(tabs)/goals",
+      route: "/goals",
       color: "#FF6B9D",
     },
     {
       title: "Love Bank",
       description: "Earn and redeem rewards",
       icon: Gift,
-      route: "/(tabs)/love-bank",
+      route: "/love-bank",
       color: "#C9A0DC",
     },
     {
       title: "The Spark",
       description: "Get date ideas and inspiration",
       icon: Sparkles,
-      route: "/(tabs)/spark",
+      route: "/spark",
       color: "#FFB74D",
     },
     {
       title: "Memories",
       description: "Your shared photo gallery",
       icon: Camera,
-      route: "/(tabs)/memories",
+      route: "/memories",
       color: "#64B5F6",
     },
     {
       title: "Compatibility",
       description: "Discover your match score",
       icon: Users,
-      route: "/(tabs)/compatibility",
+      route: "/compatibility",
       color: "#FF6B9D",
     },
     {
       title: "Vision Board",
       description: "Plan your future together",
       icon: Lightbulb,
-      route: "/(tabs)/vision-board",
+      route: "/vision-board",
       color: "#FFD54F",
     },
     {
       title: "Games",
       description: "Fun games for couples",
       icon: Gamepad2,
-      route: "/(tabs)/games",
+      route: "/games",
       color: "#81C784",
     },
     {
       title: "Deep Conversations",
       description: "Meaningful discussion prompts",
       icon: MessageSquare,
-      route: "/(tabs)/conversations",
+      route: "/conversations",
       color: "#9575CD",
     },
     {
       title: "Conflict Repair",
       description: "Navigate challenges together",
       icon: ShieldQuestion,
-      route: "/(tabs)/conflict-repair",
+      route: "/conflict-repair",
       color: "#F06292",
     },
     {
       title: "Spark Challenges",
       description: "Daily relationship challenges",
       icon: Zap,
-      route: "/(tabs)/spark-challenges",
+      route: "/spark-challenges",
       color: "#FFB300",
     },
     {
       title: "Settings",
       description: "Customize your experience",
       icon: Settings,
-      route: "/(tabs)/settings",
+      route: "/settings",
       color: "#78909C",
     },
   ];
@@ -115,13 +115,16 @@ export default function MenuScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.lightGray }]} edges={["top"]}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Menu</Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Explore all features
+    <View style={[styles.container, { backgroundColor: colors.white }]}>
+      <LinearGradient
+        colors={[colors.softRose, colors.lightRose, colors.white]}
+        style={styles.header}
+      >
+        <Text style={[styles.title, { color: colors.deepSlate }]}>Explore</Text>
+        <Text style={[styles.subtitle, { color: colors.deepSlate }]}>
+          Discover all features
         </Text>
-      </View>
+      </LinearGradient>
 
       <ScrollView
         style={styles.scrollView}
@@ -148,7 +151,7 @@ export default function MenuScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -157,25 +160,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 32,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
   },
   title: {
     fontSize: 32,
     fontWeight: "700" as const,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: 16,
-    fontWeight: "400" as const,
+    fontSize: 15,
+    opacity: 0.7,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
   },
   menuItem: {
     flexDirection: "row",
