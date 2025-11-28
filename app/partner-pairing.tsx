@@ -10,6 +10,8 @@ import {
   SafeAreaView,
   ScrollView,
   Clipboard,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Stack } from 'expo-router';
 import { usePartner } from '@/contexts/PartnerContext';
@@ -255,7 +257,15 @@ export default function PartnerPairingScreen() {
           headerTintColor: colors.textPrimary,
         }}
       />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
         <View style={styles.header}>
           <View style={styles.iconContainer}>
             {isPaired ? (
@@ -361,7 +371,8 @@ export default function PartnerPairingScreen() {
             </View>
           </>
         )}
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
