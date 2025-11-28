@@ -1,11 +1,10 @@
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Users, ChevronRight, CheckCircle, Share } from "lucide-react-native";
+import { Users, ChevronRight, CheckCircle } from "lucide-react-native";
 import { useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useMutation } from "@tanstack/react-query";
 import { generateText } from "@rork-ai/toolkit-sdk";
-import { ShareToCommunityModal } from "@/components/ShareToCommunityModal";
 
 type Question = {
   id: string;
@@ -110,7 +109,6 @@ export default function CompatibilityScreen() {
   const [partner2Answers, setPartner2Answers] = useState<Answer[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [showShareModal, setShowShareModal] = useState(false);
 
   const analyzeMutation = useMutation({
     mutationFn: async () => {
@@ -308,14 +306,6 @@ Generate suggestions separated by "---". Be specific and practical.`;
         )}
 
         <TouchableOpacity
-          style={[styles.shareButton, { backgroundColor: colors.accentRose }]}
-          onPress={() => setShowShareModal(true)}
-        >
-          <Share size={20} color={colors.white} />
-          <Text style={[styles.shareButtonText, { color: colors.white }]}>Share to Community</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
           style={[styles.retakeButton, { backgroundColor: colors.deepSlate }]}
           onPress={() => {
             setStep("intro");
@@ -353,18 +343,6 @@ Generate suggestions separated by "---". Be specific and practical.`;
       {step === "intro" && renderIntro()}
       {(step === "partner1" || step === "partner2") && renderQuestion()}
       {step === "results" && renderResults()}
-
-      <ShareToCommunityModal
-        visible={showShareModal}
-        onClose={() => setShowShareModal(false)}
-        sharedFrom="Compatibility Test"
-        sharedData={{
-          score: calculateCompatibilityScore(),
-          suggestions: suggestions,
-          timestamp: new Date().toISOString(),
-        }}
-        onSuccess={() => Alert.alert("Success", "Shared to community!")}
-      />
     </View>
   );
 }
@@ -546,19 +524,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     lineHeight: 22,
-  },
-  shareButton: {
-    flexDirection: "row" as const,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 18,
-    borderRadius: 16,
-    marginBottom: 12,
-    gap: 8,
-  },
-  shareButtonText: {
-    fontSize: 16,
-    fontWeight: "700" as const,
   },
   retakeButton: {
     paddingVertical: 18,
