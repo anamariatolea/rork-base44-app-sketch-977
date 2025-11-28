@@ -12,7 +12,7 @@ export default function HeartbeatScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { streak, recordActivity } = useStreak();
-  const { currentMood, recordMood, moodHistory, isRecording } = useMood();
+  const { currentMood, recordMood, moodHistory } = useMood();
   const [partnerMood] = useState<MoodType>("happy");
   const [showMoodHistory, setShowMoodHistory] = useState(false);
 

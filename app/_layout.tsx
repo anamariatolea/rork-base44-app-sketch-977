@@ -48,6 +48,7 @@ function RootLayoutNav() {
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="signup" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="partner-pairing" options={{ headerShown: true, title: "Partner Pairing" }} />
     </Stack>
   );
 }
@@ -68,7 +69,7 @@ export default function RootLayout() {
                   <PhotoStorageProvider>
                     <MoodProvider>
                       <PartnerProvider>
-                        <GestureHandlerRootView>
+                        <GestureHandlerRootView style={{ flex: 1 }}>
                           <RootLayoutNav />
                         </GestureHandlerRootView>
                       </PartnerProvider>

@@ -9,10 +9,10 @@ import {
   ActivityIndicator,
   SafeAreaView,
   ScrollView,
-  Clipboard,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { Stack } from 'expo-router';
 import { usePartner } from '@/contexts/PartnerContext';
 import { useTheme } from '@/contexts/ThemeContext';
