@@ -1,6 +1,6 @@
 import { publicProcedure } from "../../../create-context";
 import { z } from "zod";
-import { supabase } from "@/constants/supabase";
+import { supabase } from "../../../../lib/supabase";
 
 export const getPartnershipProcedure = publicProcedure
   .input(
