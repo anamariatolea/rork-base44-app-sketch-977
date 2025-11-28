@@ -20,9 +20,12 @@ function RootLayoutNav() {
   const { user, loading, initialized } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const [isNavigationReady, setIsNavigationReady] = React.useState(false);
 
   useEffect(() => {
     if (!initialized || loading) return;
+
+    setIsNavigationReady(true);
 
     const inAuthGroup = segments[0] === 'login' || segments[0] === 'signup';
 
@@ -33,7 +36,7 @@ function RootLayoutNav() {
     }
   }, [user, segments, initialized, loading, router]);
 
-  if (!initialized || loading) {
+  if (!initialized || loading || !isNavigationReady) {
     return null;
   }
 

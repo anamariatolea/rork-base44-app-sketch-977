@@ -1,5 +1,5 @@
 import createContextHook from '@nkzw/create-context-hook';
-import { supabase } from '@/constants/supabase';
+import { supabase, isSupabaseConfigured } from '@/constants/supabase';
 import { Session, User, AuthError } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -31,6 +31,19 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     let mounted = true;
 
     const initializeAuth = async () => {
+      if (!isSupabaseConfigured || !supabase) {
+        console.warn('Supabase is not configured. Please add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to your .env file.');
+        if (mounted) {
+          setAuthState({
+            user: null,
+            session: null,
+            loading: false,
+            initialized: true,
+          });
+        }
+        return;
+      }
+
       try {
         const storedSession = await AsyncStorage.getItem(STORAGE_KEY);
         
@@ -81,6 +94,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
     initializeAuth();
 
+    if (!isSupabaseConfigured || !supabase) {
+      return;
+    }
+
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event);
@@ -114,6 +131,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   }, []);
 
   const signUp = async (email: string, password: string) => {
+    if (!isSupabaseConfigured || !supabase) {
+      return { error: { message: 'Supabase is not configured' } as AuthError };
+    }
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -122,6 +142,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   };
 
   const signIn = async (email: string, password: string) => {
+    if (!isSupabaseConfigured || !supabase) {
+      return { error: { message: 'Supabase is not configured' } as AuthError };
+    }
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -130,6 +153,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   };
 
   const signOut = async () => {
+    if (!isSupabaseConfigured || !supabase) {
+      return;
+    }
     await supabase.auth.signOut();
     await AsyncStorage.removeItem(STORAGE_KEY);
   };
