@@ -1,7 +1,7 @@
 import { publicProcedure } from "../../../create-context";
 import { z } from "zod";
 import { supabase, isSupabaseConfigured } from "../../../../lib/supabase";
-import { findPartnershipByUserId, updatePartnership } from "../../../../lib/local-partnerships";
+import { findPartnershipByUserId, updatePartnership, setProfile } from "../../../../lib/local-partnerships";
 
 function generatePairingCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -39,6 +39,11 @@ export const generateCodeProcedure = publicProcedure
         pairing_code: code,
         code_expires_at: expiresAt.toISOString(),
         paired_at: null,
+      });
+
+      setProfile(input.userId, {
+        email: 'demo@example.com',
+        display_name: 'You',
       });
 
       console.log('[generateCode] Successfully generated code (local):', code);
