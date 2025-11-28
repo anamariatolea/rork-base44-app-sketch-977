@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Modal, Alert } from "react-native";
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Modal, Alert, ActivityIndicator } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Heart, Target, Calendar, TrendingUp, Smile, Meh, Frown, Zap, Battery, Briefcase, Flame, History, Camera, ImageIcon, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -50,75 +50,105 @@ export default function HeartbeatScreen() {
   const analyzeMutation = useMutation({
     mutationFn: async (imageUri: string) => {
       console.log("Analyzing image with Gemini:", imageUri);
+      console.log("API Key present:", !!process.env.EXPO_PUBLIC_GOOGLE_GEMINI_API_KEY);
+      
+      if (!process.env.EXPO_PUBLIC_GOOGLE_GEMINI_API_KEY) {
+        throw new Error("Gemini API key not configured. Please add EXPO_PUBLIC_GOOGLE_GEMINI_API_KEY to your environment.");
+      }
+      
       return await analyzeImage(imageUri);
     },
     onSuccess: async (data, imageUri) => {
       console.log("Analysis complete:", data);
-      await addPhoto({
-        uri: imageUri,
-        caption: data.caption,
-        category: "memory",
-        description: data.description,
-        mood: data.mood,
-        tags: data.suggestedTags,
-        relationshipMoment: data.relationshipMoment,
-      });
-      Alert.alert("Memory Added!", "Your memory has been saved successfully.");
+      try {
+        await addPhoto({
+          uri: imageUri,
+          caption: data.caption,
+          category: "memory",
+          description: data.description,
+          mood: data.mood,
+          tags: data.suggestedTags,
+          relationshipMoment: data.relationshipMoment,
+        });
+        Alert.alert("Memory Added!", "Your memory has been saved successfully.");
+      } catch (storageError) {
+        console.error("Storage error:", storageError);
+        Alert.alert("Storage Failed", "Photo analyzed but failed to save. Please try again.");
+      }
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Analysis error:", error);
-      Alert.alert("Analysis Failed", "Could not analyze the image. Please try again.");
+      const errorMessage = error?.message || "Could not analyze the image. Please try again.";
+      Alert.alert("Analysis Failed", errorMessage);
     },
   });
 
   const pickImage = async () => {
-    console.log("Picking image...");
-    setShowAddMemoryModal(false);
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    console.log("Permission status:", status);
+    try {
+      console.log("Picking image...");
+      setShowAddMemoryModal(false);
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      console.log("Permission status:", status);
 
-    if (status !== "granted") {
-      console.log("Permission denied");
-      Alert.alert("Permission Required", "Please grant photo library access to add memories.");
-      return;
-    }
+      if (status !== "granted") {
+        console.log("Permission denied");
+        Alert.alert("Permission Required", "Please grant photo library access to add memories.");
+        return;
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: "images" as any,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.8,
-    });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: "images" as any,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
 
-    console.log("Image picker result:", result);
+      console.log("Image picker result:", result);
 
-    if (!result.canceled && result.assets[0]) {
-      analyzeMutation.mutate(result.assets[0].uri);
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        console.log("Selected image URI:", imageUri);
+        analyzeMutation.mutate(imageUri);
+      } else {
+        console.log("Image picker cancelled");
+      }
+    } catch (error) {
+      console.error("Error picking image:", error);
+      Alert.alert("Error", "Failed to pick image. Please try again.");
     }
   };
 
   const takePicture = async () => {
-    console.log("Taking picture...");
-    setShowAddMemoryModal(false);
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    console.log("Camera permission status:", status);
+    try {
+      console.log("Taking picture...");
+      setShowAddMemoryModal(false);
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      console.log("Camera permission status:", status);
 
-    if (status !== "granted") {
-      console.log("Permission denied");
-      Alert.alert("Permission Required", "Please grant camera access to take photos.");
-      return;
-    }
+      if (status !== "granted") {
+        console.log("Permission denied");
+        Alert.alert("Permission Required", "Please grant camera access to take photos.");
+        return;
+      }
 
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.8,
-    });
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
 
-    console.log("Camera result:", result);
+      console.log("Camera result:", result);
 
-    if (!result.canceled && result.assets[0]) {
-      analyzeMutation.mutate(result.assets[0].uri);
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        console.log("Captured image URI:", imageUri);
+        analyzeMutation.mutate(imageUri);
+      } else {
+        console.log("Camera cancelled");
+      }
+    } catch (error) {
+      console.error("Error taking picture:", error);
+      Alert.alert("Error", "Failed to take picture. Please try again.");
     }
   };
 
@@ -332,10 +362,23 @@ export default function HeartbeatScreen() {
           ))}
         </View>
 
+        {analyzeMutation.isPending && (
+          <View style={[styles.analyzingCard, { backgroundColor: colors.white, shadowColor: colors.deepSlate }]}>
+            <ActivityIndicator size="large" color={colors.accentRose} />
+            <Text style={[styles.analyzingText, { color: colors.textPrimary }]}>Analyzing your memory with AI...</Text>
+            <Text style={[styles.analyzingSubtext, { color: colors.textSecondary }]}>This may take a few moments</Text>
+          </View>
+        )}
+
         <View style={styles.quickActions}>
           <TouchableOpacity 
-            style={[styles.actionButton, { backgroundColor: colors.deepSlate }]}
+            style={[
+              styles.actionButton, 
+              { backgroundColor: colors.deepSlate },
+              analyzeMutation.isPending && styles.actionButtonDisabled
+            ]}
             onPress={() => setShowAddMemoryModal(true)}
+            disabled={analyzeMutation.isPending}
           >
             <Text style={[styles.actionButtonText, { color: colors.white }]}>📝 Add Memory</Text>
           </TouchableOpacity>
@@ -716,5 +759,29 @@ const styles = StyleSheet.create({
   },
   pickerOptionSubtitle: {
     fontSize: 14,
+  },
+  analyzingCard: {
+    borderRadius: 24,
+    paddingVertical: 32,
+    paddingHorizontal: 24,
+    alignItems: "center",
+    marginBottom: 16,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  analyzingText: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+    marginTop: 16,
+  },
+  analyzingSubtext: {
+    fontSize: 14,
+    marginTop: 4,
+    textAlign: "center",
+  },
+  actionButtonDisabled: {
+    opacity: 0.5,
   },
 });

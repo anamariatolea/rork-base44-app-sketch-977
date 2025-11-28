@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import * as FileSystem from "expo-file-system";
+import { Platform } from "react-native";
 
 const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_GEMINI_API_KEY || "";
 
@@ -84,17 +85,25 @@ async function convertImageToBase64(imageUri: string): Promise<string> {
     }
 
     if (imageUri.startsWith("http://") || imageUri.startsWith("https://")) {
-      const response = await fetch(imageUri);
-      const blob = await response.blob();
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64 = (reader.result as string).split(",")[1];
-          resolve(base64);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
+      if (Platform.OS === "web") {
+        const response = await fetch(imageUri);
+        const blob = await response.blob();
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64 = (reader.result as string).split(",")[1];
+            resolve(base64);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      } else {
+        const base64 = await FileSystem.readAsStringAsync(imageUri, {
+          encoding: "base64",
+        });
+        console.log("Image converted to base64");
+        return base64;
+      }
     }
 
     if (imageUri.startsWith("file://")) {
@@ -105,7 +114,15 @@ async function convertImageToBase64(imageUri: string): Promise<string> {
       return base64;
     }
 
-    throw new Error("Unsupported image URI format");
+    if (imageUri.startsWith("/") || !imageUri.includes("://")) {
+      const base64 = await FileSystem.readAsStringAsync(imageUri, {
+        encoding: "base64",
+      });
+      console.log("Image converted to base64");
+      return base64;
+    }
+
+    throw new Error("Unsupported image URI format: " + imageUri);
   } catch (error) {
     console.error("Error converting image to base64:", error);
     throw error;
