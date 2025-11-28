@@ -48,20 +48,25 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         const storedSession = await AsyncStorage.getItem(STORAGE_KEY);
         
         if (storedSession) {
-          const parsedSession = JSON.parse(storedSession);
-          const { data, error } = await supabase.auth.setSession({
-            access_token: parsedSession.access_token,
-            refresh_token: parsedSession.refresh_token,
-          });
-
-          if (mounted && !error && data.session) {
-            setAuthState({
-              user: data.session.user,
-              session: data.session,
-              loading: false,
-              initialized: true,
+          try {
+            const parsedSession = JSON.parse(storedSession);
+            const { data, error } = await supabase.auth.setSession({
+              access_token: parsedSession.access_token,
+              refresh_token: parsedSession.refresh_token,
             });
-            return;
+
+            if (mounted && !error && data.session) {
+              setAuthState({
+                user: data.session.user,
+                session: data.session,
+                loading: false,
+                initialized: true,
+              });
+              return;
+            }
+          } catch (sessionError) {
+            console.log('Error restoring session, clearing stored data:', sessionError);
+            await AsyncStorage.removeItem(STORAGE_KEY);
           }
         }
 
