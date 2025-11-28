@@ -343,7 +343,7 @@ export default function PartnerPairingScreen() {
             <View style={styles.divider} />
 
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Enter Partner's Code</Text>
+              <Text style={styles.cardTitle}>Enter Partner&apos;s Code</Text>
               <Text style={styles.infoText}>
                 Have a code from your partner? Enter it below to connect
               </Text>

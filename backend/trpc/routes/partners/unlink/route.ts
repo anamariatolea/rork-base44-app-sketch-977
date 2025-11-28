@@ -1,6 +1,6 @@
 import { publicProcedure } from "../../../create-context";
 import { z } from "zod";
-import { supabase } from "../../../../lib/supabase";
+import { supabase, isSupabaseConfigured } from "../../../../lib/supabase";
 
 export const unlinkPartnerProcedure = publicProcedure
   .input(
@@ -10,6 +10,11 @@ export const unlinkPartnerProcedure = publicProcedure
   )
   .mutation(async ({ input }) => {
     console.log('[unlinkPartner] Unlinking partner for user:', input.userId);
+
+    if (!isSupabaseConfigured) {
+      console.error('[unlinkPartner] Supabase not configured');
+      throw new Error('Database not configured. Please set up Supabase credentials in your environment variables.');
+    }
 
     const { error } = await supabase
       .from('partnerships')

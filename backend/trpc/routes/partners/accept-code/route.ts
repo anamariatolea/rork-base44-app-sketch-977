@@ -1,6 +1,6 @@
 import { publicProcedure } from "../../../create-context";
 import { z } from "zod";
-import { supabase } from "../../../../lib/supabase";
+import { supabase, isSupabaseConfigured } from "../../../../lib/supabase";
 
 export const acceptCodeProcedure = publicProcedure
   .input(
@@ -11,6 +11,11 @@ export const acceptCodeProcedure = publicProcedure
   )
   .mutation(async ({ input }) => {
     console.log('[acceptCode] User', input.userId, 'attempting to use code:', input.code);
+
+    if (!isSupabaseConfigured) {
+      console.error('[acceptCode] Supabase not configured');
+      throw new Error('Database not configured. Please set up Supabase credentials in your environment variables.');
+    }
 
     const { data: existingPartnership, error: checkError } = await supabase
       .from('partnerships')

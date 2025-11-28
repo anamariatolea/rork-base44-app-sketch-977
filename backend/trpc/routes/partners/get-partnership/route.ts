@@ -1,6 +1,6 @@
 import { publicProcedure } from "../../../create-context";
 import { z } from "zod";
-import { supabase } from "../../../../lib/supabase";
+import { supabase, isSupabaseConfigured } from "../../../../lib/supabase";
 
 export const getPartnershipProcedure = publicProcedure
   .input(
@@ -10,6 +10,11 @@ export const getPartnershipProcedure = publicProcedure
   )
   .query(async ({ input }) => {
     console.log('[getPartnership] Fetching partnership for user:', input.userId);
+
+    if (!isSupabaseConfigured) {
+      console.error('[getPartnership] Supabase not configured');
+      return null;
+    }
 
     const { data: partnership, error } = await supabase
       .from('partnerships')

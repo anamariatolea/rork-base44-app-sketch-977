@@ -1,6 +1,6 @@
 import { publicProcedure } from "../../../create-context";
 import { z } from "zod";
-import { supabase } from "../../../../lib/supabase";
+import { supabase, isSupabaseConfigured } from "../../../../lib/supabase";
 
 function generatePairingCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -19,6 +19,11 @@ export const generateCodeProcedure = publicProcedure
   )
   .mutation(async ({ input }) => {
     console.log('[generateCode] Starting for user:', input.userId);
+
+    if (!isSupabaseConfigured) {
+      console.error('[generateCode] Supabase not configured');
+      throw new Error('Database not configured. Please set up Supabase credentials in your environment variables.');
+    }
 
     const code = generatePairingCode();
     const expiresAt = new Date();
