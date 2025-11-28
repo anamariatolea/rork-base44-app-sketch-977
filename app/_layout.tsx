@@ -13,6 +13,7 @@ import { PhotoStorageProvider } from "@/contexts/PhotoStorageContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { MoodProvider } from "@/contexts/MoodContext";
 import { PartnerProvider } from "@/contexts/PartnerContext";
+import { LoveBankContext } from "@/contexts/LoveBankContext";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -69,9 +70,11 @@ export default function RootLayout() {
                   <PhotoStorageProvider>
                     <MoodProvider>
                       <PartnerProvider>
-                        <GestureHandlerRootView style={{ flex: 1 }}>
-                          <RootLayoutNav />
-                        </GestureHandlerRootView>
+                        <LoveBankContext>
+                          <GestureHandlerRootView style={{ flex: 1 }}>
+                            <RootLayoutNav />
+                          </GestureHandlerRootView>
+                        </LoveBankContext>
                       </PartnerProvider>
                     </MoodProvider>
                   </PhotoStorageProvider>

@@ -1,8 +1,10 @@
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Plus, CheckCircle2, Circle, Calendar as CalendarIcon, Star, X, Trash2 } from "lucide-react-native";
-import { useState } from "react";
+import { Plus, CheckCircle2, Circle, Calendar as CalendarIcon, Star, X, Trash2, Gift, Coins } from "lucide-react-native";
+import { useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Colors from "@/constants/colors";
+import { useLoveBank } from "@/contexts/LoveBankContext";
 
 type Goal = {
   id: number;
@@ -11,15 +13,106 @@ type Goal = {
   category: "daily" | "weekly" | "yearly";
   completed: boolean;
   streak?: number;
+  reward?: string;
+  rewardPoints?: number;
+};
+
+const GOALS_KEY = "relationship_goals";
+const BONUS_POINTS = {
+  daily: 10,
+  weekly: 25,
+  yearly: 100,
 };
 
 export default function GoalsScreen() {
   const insets = useSafeAreaInsets();
+  const { addPoints } = useLoveBank();
   const [activeTab, setActiveTab] = useState<"daily" | "weekly" | "yearly">("daily");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showRewardModal, setShowRewardModal] = useState(false);
   const [newGoalTitle, setNewGoalTitle] = useState("");
   const [newGoalDescription, setNewGoalDescription] = useState("");
-  const [goals, setGoals] = useState<Goal[]>([
+  const [customReward, setCustomReward] = useState("");
+  const [rewardPoints, setRewardPoints] = useState("");
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [lastCompletionState, setLastCompletionState] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    loadGoals();
+  }, []);
+
+  useEffect(() => {
+    if (isLoaded) {
+      saveGoals();
+      checkForBonus();
+    }
+  }, [goals, isLoaded]);
+
+  const loadGoals = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(GOALS_KEY);
+      if (stored) {
+        const parsedGoals = JSON.parse(stored);
+        setGoals(parsedGoals);
+        const completionState = getCompletionState(parsedGoals);
+        setLastCompletionState(completionState);
+      } else {
+        setGoals(getDefaultGoals());
+      }
+    } catch (error) {
+      console.error("Error loading goals:", error);
+      setGoals(getDefaultGoals());
+    } finally {
+      setIsLoaded(true);
+    }
+  };
+
+  const saveGoals = async () => {
+    try {
+      await AsyncStorage.setItem(GOALS_KEY, JSON.stringify(goals));
+    } catch (error) {
+      console.error("Error saving goals:", error);
+    }
+  };
+
+  const getCompletionState = (goalsList: Goal[]) => {
+    const state: Record<string, boolean> = {};
+    ["daily", "weekly", "yearly"].forEach((category) => {
+      const categoryGoals = goalsList.filter((g) => g.category === category);
+      state[category] = categoryGoals.length > 0 && categoryGoals.every((g) => g.completed);
+    });
+    return state;
+  };
+
+  const checkForBonus = () => {
+    const currentState = getCompletionState(goals);
+    
+    ["daily", "weekly", "yearly"].forEach((category) => {
+      const wasCompleted = lastCompletionState[category];
+      const isCompleted = currentState[category];
+      
+      if (!wasCompleted && isCompleted) {
+        const bonus = BONUS_POINTS[category as keyof typeof BONUS_POINTS];
+        addPoints(bonus);
+        Alert.alert(
+          "🎉 Bonus Points!",
+          `Congratulations! You completed all ${category} goals and earned ${bonus} Love Bank points!`,
+          [
+            {
+              text: "Set Custom Reward",
+              onPress: () => setShowRewardModal(true),
+            },
+            { text: "Great!", style: "default" },
+          ]
+        );
+      }
+    });
+    
+    setLastCompletionState(currentState);
+  };
+
+  const getDefaultGoals = (): Goal[] => [
     {
       id: 1,
       title: "Morning text",
@@ -94,7 +187,7 @@ export default function GoalsScreen() {
       category: "yearly",
       completed: false,
     },
-  ]);
+  ];
 
   const handleAddGoal = () => {
     if (!newGoalTitle.trim()) {
@@ -117,7 +210,47 @@ export default function GoalsScreen() {
   };
 
   const handleToggleGoal = (id: number) => {
-    setGoals(goals.map(g => g.id === id ? { ...g, completed: !g.completed } : g));
+    const goal = goals.find((g) => g.id === id);
+    if (!goal) return;
+
+    const wasCompleted = goal.completed;
+    const updatedGoals = goals.map((g) =>
+      g.id === id ? { ...g, completed: !g.completed } : g
+    );
+    setGoals(updatedGoals);
+
+    if (!wasCompleted && goal.rewardPoints) {
+      addPoints(goal.rewardPoints);
+      Alert.alert(
+        "Points Earned!",
+        `You earned ${goal.rewardPoints} points for completing: ${goal.title}`,
+        [{ text: "Nice!", style: "default" }]
+      );
+    }
+  };
+
+  const handleSetReward = (goalId: number) => {
+    if (!customReward.trim() || !rewardPoints.trim()) {
+      Alert.alert("Error", "Please enter both a reward and points value.");
+      return;
+    }
+
+    setGoals(
+      goals.map((g) =>
+        g.id === goalId
+          ? { ...g, reward: customReward, rewardPoints: Number(rewardPoints) }
+          : g
+      )
+    );
+
+    Alert.alert(
+      "Reward Set!",
+      `Reward "${customReward}" (${rewardPoints} points) has been added to the goal.`
+    );
+
+    setCustomReward("");
+    setRewardPoints("");
+    setShowRewardModal(false);
   };
 
   const handleDeleteGoal = (id: number) => {
@@ -153,6 +286,22 @@ export default function GoalsScreen() {
     </TouchableOpacity>
   );
 
+  const handleAddCustomReward = () => {
+    if (!customReward.trim() || !rewardPoints.trim()) {
+      Alert.alert("Error", "Please enter both a reward description and points.");
+      return;
+    }
+
+    Alert.alert(
+      "Custom Reward Added!",
+      `"${customReward}" will earn you ${rewardPoints} points when completed. Keep working towards your goals!`
+    );
+
+    setCustomReward("");
+    setRewardPoints("");
+    setShowRewardModal(false);
+  };
+
   const GoalCard = ({ goal }: { goal: Goal }) => (
     <View style={styles.goalCard}>
       <TouchableOpacity style={styles.goalCheckbox} onPress={() => handleToggleGoal(goal.id)}>
@@ -172,11 +321,21 @@ export default function GoalsScreen() {
           {goal.title}
         </Text>
         <Text style={styles.goalDescription}>{goal.description}</Text>
-        {goal.streak && (
-          <View style={styles.streakBadge}>
-            <Text style={styles.streakText}>🔥 {goal.streak} day streak</Text>
-          </View>
-        )}
+        <View style={styles.goalBadges}>
+          {goal.streak && (
+            <View style={styles.streakBadge}>
+              <Text style={styles.streakText}>🔥 {goal.streak} day streak</Text>
+            </View>
+          )}
+          {goal.reward && (
+            <View style={styles.rewardBadge}>
+              <Gift size={12} color={Colors.accentRose} />
+              <Text style={styles.rewardText}>
+                {goal.reward} ({goal.rewardPoints} pts)
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
       <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeleteGoal(goal.id)}>
         <Trash2 size={20} color={Colors.textSecondary} />
@@ -200,9 +359,17 @@ export default function GoalsScreen() {
       </View>
 
       <View style={styles.progressContainer}>
-        <Text style={styles.progressText}>
-          {completedCount} of {filteredGoals.length} completed
-        </Text>
+        <View style={styles.progressHeader}>
+          <Text style={styles.progressText}>
+            {completedCount} of {filteredGoals.length} completed
+          </Text>
+          {completedCount === filteredGoals.length && filteredGoals.length > 0 && (
+            <View style={styles.bonusBadge}>
+              <Coins size={14} color={Colors.white} />
+              <Text style={styles.bonusText}>+{BONUS_POINTS[activeTab]} bonus</Text>
+            </View>
+          )}
+        </View>
         <View style={styles.progressBar}>
           <View
             style={[
@@ -227,6 +394,14 @@ export default function GoalsScreen() {
         <TouchableOpacity style={styles.addButton} onPress={() => setShowAddModal(true)}>
           <Plus size={24} color={Colors.white} />
           <Text style={styles.addButtonText}>Add New Goal</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.rewardButton}
+          onPress={() => setShowRewardModal(true)}
+        >
+          <Gift size={20} color={Colors.accentRose} />
+          <Text style={styles.rewardButtonText}>Add Custom Reward</Text>
         </TouchableOpacity>
 
         <View style={{ height: 40 }} />
@@ -286,6 +461,72 @@ export default function GoalsScreen() {
 
                     <TouchableOpacity style={styles.saveButton} onPress={handleAddGoal}>
                       <Text style={styles.saveButtonText}>Add Goal</Text>
+                    </TouchableOpacity>
+                  </ScrollView>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal
+        visible={showRewardModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowRewardModal(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+                <View style={styles.modalContent}>
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Add Custom Reward</Text>
+                    <TouchableOpacity onPress={() => setShowRewardModal(false)}>
+                      <X size={24} color={Colors.textSecondary} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                  >
+                    <Text style={styles.rewardDescription}>
+                      Create a custom reward for yourself outside the app (like a date night, spa day, etc.) to celebrate your progress!
+                    </Text>
+
+                    <Text style={styles.label}>Reward Description</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="e.g., Date night, Spa day, Movie marathon"
+                      placeholderTextColor={Colors.mediumGray}
+                      value={customReward}
+                      onChangeText={setCustomReward}
+                      returnKeyType="next"
+                      blurOnSubmit={false}
+                    />
+
+                    <Text style={styles.label}>Points Value</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="e.g., 50"
+                      placeholderTextColor={Colors.mediumGray}
+                      value={rewardPoints}
+                      onChangeText={setRewardPoints}
+                      keyboardType="numeric"
+                      returnKeyType="done"
+                      blurOnSubmit={true}
+                    />
+
+                    <TouchableOpacity
+                      style={styles.saveButton}
+                      onPress={handleAddCustomReward}
+                    >
+                      <Text style={styles.saveButtonText}>Add Reward</Text>
                     </TouchableOpacity>
                   </ScrollView>
                 </View>
@@ -496,5 +737,68 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 18,
     fontWeight: "700" as const,
+  },
+  progressHeader: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "space-between" as const,
+    marginBottom: 8,
+  },
+  bonusBadge: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: Colors.success,
+    borderRadius: 12,
+  },
+  bonusText: {
+    fontSize: 12,
+    fontWeight: "600" as const,
+    color: Colors.white,
+  },
+  goalBadges: {
+    flexDirection: "row" as const,
+    gap: 8,
+    flexWrap: "wrap" as const,
+  },
+  rewardBadge: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: Colors.lightRose,
+    borderRadius: 8,
+  },
+  rewardText: {
+    fontSize: 12,
+    fontWeight: "600" as const,
+    color: Colors.accentRose,
+  },
+  rewardButton: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    backgroundColor: Colors.white,
+    paddingVertical: 16,
+    borderRadius: 16,
+    marginTop: 12,
+    gap: 8,
+    borderWidth: 2,
+    borderColor: Colors.accentRose,
+    borderStyle: "dashed" as const,
+  },
+  rewardButtonText: {
+    color: Colors.accentRose,
+    fontSize: 16,
+    fontWeight: "600" as const,
+  },
+  rewardDescription: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginBottom: 20,
+    lineHeight: 22,
   },
 });

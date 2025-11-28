@@ -2,8 +2,10 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Modal, TextInput,
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Coins, Coffee, UtensilsCrossed, Sparkles, Home, Music, Heart, X, Trash2, Gift } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Colors from "@/constants/colors";
+import { useLoveBank } from "@/contexts/LoveBankContext";
 
 type Reward = {
   id: number;
@@ -12,7 +14,10 @@ type Reward = {
   points: number;
   icon: any;
   category: string;
+  claimed?: boolean;
 };
+
+const REWARDS_KEY = "love_bank_rewards";
 
 const iconOptions = [
   { name: "Coffee", component: Coffee },
@@ -26,8 +31,7 @@ const iconOptions = [
 
 export default function LoveBankScreen() {
   const insets = useSafeAreaInsets();
-  const myPoints = 125;
-  const partnerPoints = 98;
+  const { points, spendPoints } = useLoveBank();
   const [showAddModal, setShowAddModal] = useState(false);
   const [newRewardTitle, setNewRewardTitle] = useState("");
   const [newRewardDescription, setNewRewardDescription] = useState("");
@@ -35,7 +39,44 @@ export default function LoveBankScreen() {
   const [newRewardCategory, setNewRewardCategory] = useState("");
   const [selectedIcon, setSelectedIcon] = useState(0);
 
-  const [rewards, setRewards] = useState<Reward[]>([
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    loadRewards();
+  }, []);
+
+  useEffect(() => {
+    if (isLoaded) {
+      saveRewards();
+    }
+  }, [rewards, isLoaded]);
+
+  const loadRewards = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(REWARDS_KEY);
+      if (stored) {
+        setRewards(JSON.parse(stored));
+      } else {
+        setRewards(getDefaultRewards());
+      }
+    } catch (error) {
+      console.error("Error loading rewards:", error);
+      setRewards(getDefaultRewards());
+    } finally {
+      setIsLoaded(true);
+    }
+  };
+
+  const saveRewards = async () => {
+    try {
+      await AsyncStorage.setItem(REWARDS_KEY, JSON.stringify(rewards));
+    } catch (error) {
+      console.error("Error saving rewards:", error);
+    }
+  };
+
+  const getDefaultRewards = (): Reward[] => [
     {
       id: 1,
       title: "Morning Coffee",
@@ -84,7 +125,7 @@ export default function LoveBankScreen() {
       icon: Heart,
       category: "Adventures",
     },
-  ]);
+  ];
 
   const handleAddReward = () => {
     if (!newRewardTitle.trim()) {
@@ -129,12 +170,47 @@ export default function LoveBankScreen() {
     );
   };
 
+  const handleClaimReward = (reward: Reward) => {
+    const canAfford = points.myPoints >= reward.points;
+    if (!canAfford) {
+      Alert.alert("Not Enough Points", `You need ${reward.points - points.myPoints} more points to claim this reward.`);
+      return;
+    }
+
+    Alert.alert(
+      "Claim Reward?",
+      `Are you sure you want to claim "${reward.title}" for ${reward.points} points?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Claim",
+          onPress: () => {
+            const success = spendPoints(reward.points);
+            if (success) {
+              setRewards(
+                rewards.map((r) => (r.id === reward.id ? { ...r, claimed: true } : r))
+              );
+              Alert.alert(
+                "Reward Claimed! 🎉",
+                `Enjoy your ${reward.title}! Your remaining balance is ${points.myPoints - reward.points} points.`
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const RewardCard = ({ reward }: { reward: Reward }) => {
     const Icon = reward.icon;
-    const canAfford = myPoints >= reward.points;
+    const canAfford = points.myPoints >= reward.points;
 
     return (
-      <View style={[styles.rewardCard, !canAfford && styles.rewardCardDisabled]}>
+      <TouchableOpacity
+        style={[styles.rewardCard, (!canAfford || reward.claimed) && styles.rewardCardDisabled]}
+        onPress={() => !reward.claimed && handleClaimReward(reward)}
+        disabled={reward.claimed}
+      >
         <View style={styles.rewardIcon}>
           <Icon size={28} color={canAfford ? Colors.accentRose : Colors.textSecondary} />
         </View>
@@ -147,16 +223,23 @@ export default function LoveBankScreen() {
             <Text style={styles.rewardCategory}>{reward.category}</Text>
             <View style={styles.pointsBadge}>
               <Coins size={14} color={canAfford ? Colors.accentRose : Colors.textSecondary} />
-              <Text style={[styles.pointsText, !canAfford && styles.pointsTextDisabled]}>
+              <Text style={[styles.pointsText, (!canAfford || reward.claimed) && styles.pointsTextDisabled]}>
                 {reward.points}
               </Text>
             </View>
           </View>
+          {reward.claimed && (
+            <View style={styles.claimedBadge}>
+              <Text style={styles.claimedText}>Claimed ✓</Text>
+            </View>
+          )}
         </View>
-        <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeleteReward(reward.id)}>
-          <Trash2 size={20} color={Colors.textSecondary} />
-        </TouchableOpacity>
-      </View>
+        {!reward.claimed && (
+          <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeleteReward(reward.id)}>
+            <Trash2 size={20} color={Colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+      </TouchableOpacity>
     );
   };
 
@@ -182,7 +265,7 @@ export default function LoveBankScreen() {
             <Text style={styles.pointsLabel}>Your Points</Text>
             <View style={styles.pointsValue}>
               <Coins size={32} color={Colors.white} />
-              <Text style={styles.pointsNumber}>{myPoints}</Text>
+              <Text style={styles.pointsNumber}>{points.myPoints}</Text>
             </View>
           </View>
           <View style={styles.pointsDivider} />
@@ -190,7 +273,7 @@ export default function LoveBankScreen() {
             <Text style={styles.pointsLabel}>Partner&apos;s Points</Text>
             <View style={styles.pointsValue}>
               <Coins size={32} color={Colors.white} />
-              <Text style={styles.pointsNumber}>{partnerPoints}</Text>
+              <Text style={styles.pointsNumber}>{points.partnerPoints}</Text>
             </View>
           </View>
         </LinearGradient>
@@ -547,5 +630,18 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 18,
     fontWeight: "700" as const,
+  },
+  claimedBadge: {
+    alignSelf: "flex-start" as const,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: Colors.success,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  claimedText: {
+    fontSize: 12,
+    fontWeight: "600" as const,
+    color: Colors.white,
   },
 });

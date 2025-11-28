@@ -92,23 +92,44 @@ export default function ConflictRepairScreen() {
   ];
 
   const handleIssuePress = async (issueId: ConflictIssue, isPremium: boolean) => {
-    if (isPremium && issueId !== "free") {
-      const featureId = issueFeatureMap[issueId];
-      if (!hasFeature(featureId)) {
-        const purchased = await purchaseFeature(featureId);
-        if (!purchased) return;
-      }
-    }
     setSelectedIssue(issueId);
     setCurrentStepIndex(0);
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     const content = getCurrentContent();
     if (!content || selectedIssue === "free") return;
 
     const steps = content.steps;
-    if (currentStepIndex < steps.length - 1) {
+    const FREE_STEPS = 2;
+    
+    if (currentStepIndex < FREE_STEPS - 1) {
+      setCurrentStepIndex(currentStepIndex + 1);
+    } else if (currentStepIndex === FREE_STEPS - 1) {
+      const featureId = issueFeatureMap[selectedIssue as Exclude<ConflictIssue, "free">];
+      if (!hasFeature(featureId)) {
+        Alert.alert(
+          "Unlock Full Script",
+          `You've completed the free steps. Unlock the full ${content.title} script for $1 to access ${steps.length - FREE_STEPS} more steps and complete the repair process.`,
+          [
+            { text: "Maybe Later", style: "cancel", onPress: () => setSelectedIssue(null) },
+            {
+              text: "Unlock for $1",
+              onPress: async () => {
+                const purchased = await purchaseFeature(featureId);
+                if (purchased) {
+                  setCurrentStepIndex(currentStepIndex + 1);
+                } else {
+                  setSelectedIssue(null);
+                }
+              },
+            },
+          ]
+        );
+        return;
+      }
+      setCurrentStepIndex(currentStepIndex + 1);
+    } else if (currentStepIndex < steps.length - 1) {
       setCurrentStepIndex(currentStepIndex + 1);
     } else {
       Alert.alert(
@@ -254,7 +275,7 @@ export default function ConflictRepairScreen() {
 
         {issues.map((issue) => {
           const Icon = issue.icon || getIcon(issue.iconName || "");
-          const isLocked = issue.isPremium && issue.id !== "free" && !hasFeature(issueFeatureMap[issue.id]);
+          const isFullyUnlocked = issue.id === "free" || !issue.isPremium || hasFeature(issueFeatureMap[issue.id]);
 
           return (
             <TouchableOpacity
@@ -262,27 +283,26 @@ export default function ConflictRepairScreen() {
               style={[
                 styles.issueCard,
                 { backgroundColor: colors.white },
-                isLocked && styles.issueCardLocked,
               ]}
               onPress={() => handleIssuePress(issue.id, issue.isPremium)}
             >
               <View style={[styles.issueIconContainer, { backgroundColor: issue.color + "20" }]}>
-                <Icon size={28} color={isLocked ? colors.mediumGray : issue.color} />
+                <Icon size={28} color={issue.color} />
               </View>
 
               <View style={styles.issueInfo}>
                 <View style={styles.issueTitleRow}>
-                  <Text style={[styles.issueTitle, { color: isLocked ? colors.textSecondary : colors.textPrimary }]}>
+                  <Text style={[styles.issueTitle, { color: colors.textPrimary }]}>
                     {issue.title}
                   </Text>
-                  {isLocked && <Lock size={16} color={colors.mediumGray} />}
+                  {!isFullyUnlocked && <Lock size={16} color={colors.mediumGray} />}
                 </View>
                 <Text style={[styles.issueDescription, { color: colors.textSecondary }]}>
                   {issue.description}
                 </Text>
-                {isLocked && (
-                  <Text style={[styles.priceTag, { color: issue.color }]}>
-                    Unlock for $1
+                {issue.isPremium && issue.id !== "free" && (
+                  <Text style={[styles.freePreview, { color: issue.color }]}>
+                    {isFullyUnlocked ? "Unlocked" : "2 free steps, unlock full for $1"}
                   </Text>
                 )}
               </View>
@@ -377,6 +397,11 @@ const styles = StyleSheet.create({
   },
   priceTag: {
     fontSize: 13,
+    fontWeight: "600" as const,
+    marginTop: 6,
+  },
+  freePreview: {
+    fontSize: 12,
     fontWeight: "600" as const,
     marginTop: 6,
   },

@@ -19,11 +19,12 @@ export default function SparkScreen() {
     mutationFn: async (category: SuggestionCategory) => {
       console.log("Generating suggestions for category:", category);
       
+      const timestamp = Date.now();
       const prompts = {
-        date: "Generate 3 unique and creative date night ideas for a couple. Make them specific, romantic, and varied in activity type (e.g., adventurous, cozy, cultural). Format each as a short 2-3 sentence description. Separate each idea with '---'.",
-        conversation: "Generate 3 deep, meaningful conversation starters for couples to strengthen their emotional connection. Make them thought-provoking but not too heavy. Format as questions. Separate each with '---'.",
-        activity: "Generate 3 fun activities couples can do together to bond and create memories. Include indoor and outdoor options. Make them creative and engaging. Format each as a short 2-3 sentence description. Separate each with '---'.",
-        advice: "Generate 3 pieces of relationship advice for couples to maintain a healthy, loving relationship. Make them practical, actionable, and heartfelt. Format each as a short 2-3 sentence tip. Separate each with '---'.",
+        date: `Generate 3 unique and creative date night ideas for a couple. Make them specific, romantic, and varied in activity type (e.g., adventurous, cozy, cultural). Format each as a short 2-3 sentence description. Separate each idea with '---'. [Request ID: ${timestamp}]`,
+        conversation: `Generate 3 deep, meaningful conversation starters for couples to strengthen their emotional connection. Make them thought-provoking but not too heavy. Format as questions. Separate each with '---'. [Request ID: ${timestamp}]`,
+        activity: `Generate 3 fun activities couples can do together to bond and create memories. Include indoor and outdoor options. Make them creative and engaging. Format each as a short 2-3 sentence description. Separate each with '---'. [Request ID: ${timestamp}]`,
+        advice: `Generate 3 pieces of relationship advice for couples to maintain a healthy, loving relationship. Make them practical, actionable, and heartfelt. Format each as a short 2-3 sentence tip. Separate each with '---'. [Request ID: ${timestamp}]`,
       };
 
       const response = await generateText(prompts[category]);
@@ -42,6 +43,7 @@ export default function SparkScreen() {
 
   const handleGenerate = () => {
     console.log("Generate button clicked");
+    setSuggestions([]);
     generateMutation.mutate(activeCategory);
   };
 
