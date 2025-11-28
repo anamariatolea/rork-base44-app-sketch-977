@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Modal, Alert, ActivityIndicator } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Heart, Target, Calendar, TrendingUp, Smile, Meh, Frown, Zap, Battery, Briefcase, Flame, History, Camera, ImageIcon, X } from "lucide-react-native";
+import { Heart, Target, Calendar, TrendingUp, Smile, Meh, Frown, Zap, Battery, Briefcase, Flame, History, Camera, ImageIcon, X, Menu, Gift, Sparkles, Users, Lightbulb, Gamepad2, MessageSquare, ShieldQuestion, Settings } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useState, useEffect } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -21,6 +21,7 @@ export default function HeartbeatScreen() {
   const [partnerMood] = useState<MoodType>("happy");
   const [showMoodHistory, setShowMoodHistory] = useState(false);
   const [showAddMemoryModal, setShowAddMemoryModal] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const router = useRouter();
   const { addPhoto } = usePhotoStorage();
 
@@ -154,7 +155,26 @@ export default function HeartbeatScreen() {
 
   const handleGetIdea = () => {
     console.log("Navigating to Spark tab");
-    router.push("/spark");
+    router.push("/spark" as any);
+  };
+
+  const menuItems = [
+    { id: 'goals', title: 'Goals & Rituals', icon: Target, route: '/goals' },
+    { id: 'love-bank', title: 'Love Bank', icon: Gift, route: '/love-bank' },
+    { id: 'spark', title: 'The Spark', icon: Sparkles, route: '/spark' },
+    { id: 'memories', title: 'Memories', icon: Camera, route: '/memories' },
+    { id: 'compatibility', title: 'Compatibility Match', icon: Users, route: '/compatibility' },
+    { id: 'vision-board', title: 'Vision Board', icon: Lightbulb, route: '/vision-board' },
+    { id: 'games', title: 'Games', icon: Gamepad2, route: '/games' },
+    { id: 'conversations', title: 'Deep Conversations', icon: MessageSquare, route: '/conversations' },
+    { id: 'conflict-repair', title: 'Conflict Repair', icon: ShieldQuestion, route: '/conflict-repair' },
+    { id: 'spark-challenges', title: 'Spark Challenges', icon: Zap, route: '/spark-challenges' },
+    { id: 'settings', title: 'Settings', icon: Settings, route: '/settings' },
+  ];
+
+  const handleMenuItemPress = (route: string) => {
+    setShowMenu(false);
+    router.push(route as any);
   };
 
   const MoodButton = ({ mood, icon: Icon, label, isSelected, onPress }: any) => (
@@ -191,6 +211,12 @@ export default function HeartbeatScreen() {
         colors={[colors.softRose, colors.lightRose, colors.white]}
         style={[styles.header, { paddingTop: insets.top + 16 }]}
       >
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={() => setShowMenu(true)}
+        >
+          <Menu size={28} color={colors.deepSlate} />
+        </TouchableOpacity>
         <Text style={[styles.greeting, { color: colors.deepSlate }]}>Good evening</Text>
         <Text style={[styles.title, { color: colors.deepSlate }]}>Us & Co</Text>
         <Text style={[styles.subtitle, { color: colors.deepSlate }]}>Your Relationship Dashboard</Text>
@@ -436,6 +462,46 @@ export default function HeartbeatScreen() {
           </View>
         </View>
       </Modal>
+
+      <Modal
+        visible={showMenu}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowMenu(false)}
+      >
+        <View style={styles.menuModalOverlay}>
+          <View style={[styles.menuModalContent, { backgroundColor: colors.white }]}>
+            <View style={styles.menuModalHeader}>
+              <Text style={[styles.menuModalTitle, { color: colors.textPrimary }]}>Explore</Text>
+              <TouchableOpacity onPress={() => setShowMenu(false)}>
+                <X size={28} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView
+              style={styles.menuScroll}
+              contentContainerStyle={styles.menuScrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[styles.menuItem, { backgroundColor: colors.lightGray }]}
+                    onPress={() => handleMenuItemPress(item.route)}
+                  >
+                    <View style={[styles.menuIconContainer, { backgroundColor: colors.white }]}>
+                      <Icon size={24} color={colors.accentRose} />
+                    </View>
+                    <Text style={[styles.menuItemText, { color: colors.textPrimary }]}>{item.title}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -449,6 +515,23 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
+    position: 'relative' as const,
+  },
+  menuButton: {
+    position: 'absolute' as const,
+    left: 20,
+    zIndex: 10,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: 22,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   greeting: {
     fontSize: 14,
@@ -783,5 +866,54 @@ const styles = StyleSheet.create({
   },
   actionButtonDisabled: {
     opacity: 0.5,
+  },
+  menuModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'flex-end',
+  },
+  menuModalContent: {
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingTop: 24,
+    maxHeight: '85%',
+  },
+  menuModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    marginBottom: 20,
+  },
+  menuModalTitle: {
+    fontSize: 28,
+    fontWeight: '700' as const,
+  },
+  menuScroll: {
+    flex: 1,
+  },
+  menuScrollContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 18,
+    borderRadius: 16,
+    marginBottom: 12,
+  },
+  menuIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  menuItemText: {
+    fontSize: 17,
+    fontWeight: '600' as const,
+    flex: 1,
   },
 });
