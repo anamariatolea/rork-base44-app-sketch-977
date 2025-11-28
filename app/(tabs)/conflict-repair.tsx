@@ -14,6 +14,7 @@ export default function ConflictRepairScreen() {
   const { hasFeature, purchaseFeature } = usePurchases();
   const [selectedIssue, setSelectedIssue] = useState<ConflictIssue | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [completedIssues, setCompletedIssues] = useState<ConflictIssue[]>([]);
 
   const issueFeatureMap: Record<Exclude<ConflictIssue, "free">, PremiumFeature> = {
     jealousy: "conflict_jealousy",
@@ -132,12 +133,12 @@ export default function ConflictRepairScreen() {
     } else if (currentStepIndex < steps.length - 1) {
       setCurrentStepIndex(currentStepIndex + 1);
     } else {
+      setCompletedIssues(prev => [...prev, selectedIssue as Exclude<ConflictIssue, "free">]);
       Alert.alert(
-        "Reflection Time",
-        content.reflection,
+        "Conflict Resolved! 🎉",
+        content.reflection + "\n\nThis issue has been marked as completed and will no longer appear in your list.",
         [
           { text: "Back to Issues", onPress: () => setSelectedIssue(null) },
-          { text: "Review Again", onPress: () => setCurrentStepIndex(0) },
         ]
       );
     }
@@ -273,7 +274,15 @@ export default function ConflictRepairScreen() {
           What are you struggling with?
         </Text>
 
-        {issues.map((issue) => {
+        {completedIssues.length > 0 && (
+          <View style={[styles.completedSection, { backgroundColor: colors.white }]}>
+            <Text style={[styles.completedText, { color: colors.textSecondary }]}>
+              ✅ {completedIssues.length} {completedIssues.length === 1 ? 'conflict' : 'conflicts'} resolved
+            </Text>
+          </View>
+        )}
+
+        {issues.filter(issue => !completedIssues.includes(issue.id)).map((issue) => {
           const Icon = issue.icon || getIcon(issue.iconName || "");
           const isFullyUnlocked = issue.id === "free" || !issue.isPremium || hasFeature(issueFeatureMap[issue.id]);
 
@@ -418,6 +427,16 @@ const styles = StyleSheet.create({
   tipText: {
     fontSize: 14,
     lineHeight: 22,
+  },
+  completedSection: {
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+    alignItems: "center" as const,
+  },
+  completedText: {
+    fontSize: 14,
+    fontWeight: "600" as const,
   },
   scriptCard: {
     padding: 32,

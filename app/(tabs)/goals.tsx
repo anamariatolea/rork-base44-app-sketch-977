@@ -222,9 +222,11 @@ export default function GoalsScreen() {
     if (!wasCompleted && goal.rewardPoints) {
       addPoints(goal.rewardPoints);
       Alert.alert(
-        "Points Earned!",
-        `You earned ${goal.rewardPoints} points for completing: ${goal.title}`,
-        [{ text: "Nice!", style: "default" }]
+        "Goal Complete! 🎉",
+        `You earned ${goal.rewardPoints} points for completing: ${goal.title}\n\nThis goal has been removed from your list.`,
+        [{ text: "Great!", onPress: () => {
+          setGoals(prev => prev.filter(g => g.id !== id));
+        }}]
       );
     }
   };

@@ -58,13 +58,18 @@ export default function SparkChallengesScreen() {
     setSelectedChallenge(challengeId);
   };
 
+  const [completedChallenges, setCompletedChallenges] = useState<string[]>([]);
+
   const handleCompleteChallenge = () => {
+    if (!selectedChallenge) return;
+    
+    setCompletedChallenges(prev => [...prev, selectedChallenge]);
+    
     Alert.alert(
-      "Challenge Complete!",
-      "Amazing work! Physical connection challenges like this strengthen your bond.",
+      "Challenge Complete! 🎉",
+      "Amazing work! Physical connection challenges like this strengthen your bond. This challenge has been marked as completed and will no longer appear in your list.",
       [
         { text: "Back to Challenges", onPress: () => setSelectedChallenge(null) },
-        { text: "Try Another", onPress: () => setSelectedChallenge(null) },
       ]
     );
   };
@@ -164,11 +169,18 @@ export default function SparkChallengesScreen() {
           </TouchableOpacity>
         )}
 
-        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-          {hasSparkAccess ? "Your Challenges" : "Preview Challenges"}
-        </Text>
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            {hasSparkAccess ? "Your Challenges" : "Preview Challenges"}
+          </Text>
+          {completedChallenges.length > 0 && (
+            <Text style={[styles.completedCount, { color: colors.textSecondary }]}>
+              {completedChallenges.length} completed
+            </Text>
+          )}
+        </View>
 
-        {SPARK_CHALLENGES.map((challenge) => {
+        {SPARK_CHALLENGES.filter(challenge => !completedChallenges.includes(challenge.id)).map((challenge) => {
           const Icon = getIcon(challenge.icon);
           const difficultyColor = getDifficultyColor(challenge.difficulty);
           const isLocked = !hasSparkAccess;
@@ -276,10 +288,16 @@ const styles = StyleSheet.create({
     marginTop: 4,
     opacity: 0.9,
   },
+  sectionHeader: {
+    marginBottom: 16,
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: "700" as const,
-    marginBottom: 16,
+  },
+  completedCount: {
+    fontSize: 14,
+    marginTop: 4,
   },
   challengeCard: {
     flexDirection: "row",
