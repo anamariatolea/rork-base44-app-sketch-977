@@ -187,12 +187,11 @@ export default function LoveBankScreen() {
           onPress: () => {
             const success = spendPoints(reward.points);
             if (success) {
-              setRewards(
-                rewards.map((r) => (r.id === reward.id ? { ...r, claimed: true } : r))
-              );
+              const newBalance = points.myPoints - reward.points;
+              setRewards(rewards.filter((r) => r.id !== reward.id));
               Alert.alert(
                 "Reward Claimed! 🎉",
-                `Enjoy your ${reward.title}! Your remaining balance is ${points.myPoints - reward.points} points.`
+                `Enjoy your ${reward.title}! Your remaining balance is ${newBalance} points.`
               );
             }
           },
