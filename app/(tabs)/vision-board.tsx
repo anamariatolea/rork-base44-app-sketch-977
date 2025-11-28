@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, Modal } from "react-native";
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, Modal, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Lightbulb, Plus, MapPin, Calendar, TrendingUp, X, Trash2, Pin } from "lucide-react-native";
 import { useState } from "react";
@@ -213,76 +213,94 @@ export default function VisionBoardScreen() {
         transparent={true}
         onRequestClose={() => setShowAddModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.white }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Add to Vision Board</Text>
-              <TouchableOpacity onPress={() => setShowAddModal(false)}>
-                <X size={24} color={colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+                <View style={[styles.modalContent, { backgroundColor: colors.white }]}>
+                  <View style={styles.modalHeader}>
+                    <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Add to Vision Board</Text>
+                    <TouchableOpacity onPress={() => setShowAddModal(false)}>
+                      <X size={24} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                  </View>
 
-            <Text style={[styles.label, { color: colors.textPrimary }]}>Category</Text>
-            <View style={styles.categorySelector}>
-              {(Object.keys(categoryInfo) as VisionCategory[]).map((category) => {
-                const categoryData = categoryInfo[category];
-                const Icon = categoryData.icon;
-                const isSelected = selectedCategory === category;
-
-                return (
-                  <TouchableOpacity
-                    key={category}
-                    style={[
-                      styles.categoryOption,
-                      { backgroundColor: colors.lightGray },
-                      isSelected && { backgroundColor: categoryData.color + "20", borderColor: categoryData.color },
-                    ]}
-                    onPress={() => setSelectedCategory(category)}
+                  <ScrollView 
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
                   >
-                    <Icon size={20} color={isSelected ? categoryData.color : colors.textSecondary} />
-                    <Text
-                      style={[
-                        styles.categoryOptionText,
-                        { color: colors.textSecondary },
-                        isSelected && { color: categoryData.color, fontWeight: "600" },
-                      ]}
+                    <Text style={[styles.label, { color: colors.textPrimary }]}>Category</Text>
+                    <View style={styles.categorySelector}>
+                      {(Object.keys(categoryInfo) as VisionCategory[]).map((category) => {
+                        const categoryData = categoryInfo[category];
+                        const Icon = categoryData.icon;
+                        const isSelected = selectedCategory === category;
+
+                        return (
+                          <TouchableOpacity
+                            key={category}
+                            style={[
+                              styles.categoryOption,
+                              { backgroundColor: colors.lightGray },
+                              isSelected && { backgroundColor: categoryData.color + "20", borderColor: categoryData.color },
+                            ]}
+                            onPress={() => setSelectedCategory(category)}
+                          >
+                            <Icon size={20} color={isSelected ? categoryData.color : colors.textSecondary} />
+                            <Text
+                              style={[
+                                styles.categoryOptionText,
+                                { color: colors.textSecondary },
+                                isSelected && { color: categoryData.color, fontWeight: "600" },
+                              ]}
+                            >
+                              {categoryData.label}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+
+                    <Text style={[styles.label, { color: colors.textPrimary }]}>Title</Text>
+                    <TextInput
+                      style={[styles.input, { backgroundColor: colors.lightGray, color: colors.textPrimary }]}
+                      placeholder="e.g., Trip to Paris, New Apartment, Date Night"
+                      placeholderTextColor={colors.mediumGray}
+                      value={newTitle}
+                      onChangeText={setNewTitle}
+                      returnKeyType="next"
+                      blurOnSubmit={false}
+                    />
+
+                    <Text style={[styles.label, { color: colors.textPrimary }]}>Description (Optional)</Text>
+                    <TextInput
+                      style={[styles.textArea, { backgroundColor: colors.lightGray, color: colors.textPrimary }]}
+                      placeholder="Add details about your vision..."
+                      placeholderTextColor={colors.mediumGray}
+                      value={newDescription}
+                      onChangeText={setNewDescription}
+                      multiline
+                      numberOfLines={4}
+                      textAlignVertical="top"
+                      returnKeyType="done"
+                      blurOnSubmit={true}
+                    />
+
+                    <TouchableOpacity
+                      style={[styles.saveButton, { backgroundColor: colors.accentRose }]}
+                      onPress={handleAddItem}
                     >
-                      {categoryData.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+                      <Text style={[styles.saveButtonText, { color: colors.white }]}>Add to Board</Text>
+                    </TouchableOpacity>
+                  </ScrollView>
+                </View>
+              </TouchableWithoutFeedback>
             </View>
-
-            <Text style={[styles.label, { color: colors.textPrimary }]}>Title</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.lightGray, color: colors.textPrimary }]}
-              placeholder="e.g., Trip to Paris, New Apartment, Date Night"
-              placeholderTextColor={colors.mediumGray}
-              value={newTitle}
-              onChangeText={setNewTitle}
-            />
-
-            <Text style={[styles.label, { color: colors.textPrimary }]}>Description (Optional)</Text>
-            <TextInput
-              style={[styles.textArea, { backgroundColor: colors.lightGray, color: colors.textPrimary }]}
-              placeholder="Add details about your vision..."
-              placeholderTextColor={colors.mediumGray}
-              value={newDescription}
-              onChangeText={setNewDescription}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-
-            <TouchableOpacity
-              style={[styles.saveButton, { backgroundColor: colors.accentRose }]}
-              onPress={handleAddItem}
-            >
-              <Text style={[styles.saveButtonText, { color: colors.white }]}>Add to Board</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -419,6 +437,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: 24,
     paddingBottom: 40,
+    maxHeight: "85%",
   },
   modalHeader: {
     flexDirection: "row",

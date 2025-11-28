@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Modal, TextInput, Alert } from "react-native";
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Plus, CheckCircle2, Circle, Calendar as CalendarIcon, Star, X, Trash2 } from "lucide-react-native";
 import { useState } from "react";
@@ -238,43 +238,61 @@ export default function GoalsScreen() {
         transparent={true}
         onRequestClose={() => setShowAddModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add New Goal</Text>
-              <TouchableOpacity onPress={() => setShowAddModal(false)}>
-                <X size={24} color={Colors.textSecondary} />
-              </TouchableOpacity>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+                <View style={styles.modalContent}>
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Add New Goal</Text>
+                    <TouchableOpacity onPress={() => setShowAddModal(false)}>
+                      <X size={24} color={Colors.textSecondary} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <ScrollView 
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                  >
+                    <Text style={styles.label}>Category: {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</Text>
+
+                    <Text style={styles.label}>Title</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="e.g., Morning text, Date night"
+                      placeholderTextColor={Colors.mediumGray}
+                      value={newGoalTitle}
+                      onChangeText={setNewGoalTitle}
+                      returnKeyType="next"
+                      blurOnSubmit={false}
+                    />
+
+                    <Text style={styles.label}>Description</Text>
+                    <TextInput
+                      style={[styles.input, styles.textArea]}
+                      placeholder="Add details about your goal..."
+                      placeholderTextColor={Colors.mediumGray}
+                      value={newGoalDescription}
+                      onChangeText={setNewGoalDescription}
+                      multiline
+                      numberOfLines={3}
+                      textAlignVertical="top"
+                      returnKeyType="done"
+                      blurOnSubmit={true}
+                    />
+
+                    <TouchableOpacity style={styles.saveButton} onPress={handleAddGoal}>
+                      <Text style={styles.saveButtonText}>Add Goal</Text>
+                    </TouchableOpacity>
+                  </ScrollView>
+                </View>
+              </TouchableWithoutFeedback>
             </View>
-
-            <Text style={styles.label}>Category: {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</Text>
-
-            <Text style={styles.label}>Title</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g., Morning text, Date night"
-              placeholderTextColor={Colors.mediumGray}
-              value={newGoalTitle}
-              onChangeText={setNewGoalTitle}
-            />
-
-            <Text style={styles.label}>Description</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Add details about your goal..."
-              placeholderTextColor={Colors.mediumGray}
-              value={newGoalDescription}
-              onChangeText={setNewGoalDescription}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-            />
-
-            <TouchableOpacity style={styles.saveButton} onPress={handleAddGoal}>
-              <Text style={styles.saveButtonText}>Add Goal</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -435,6 +453,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: 24,
     paddingBottom: 40,
+    maxHeight: "85%",
   },
   modalHeader: {
     flexDirection: "row",

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Modal, TextInput, Alert } from "react-native";
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Coins, Coffee, UtensilsCrossed, Sparkles, Home, Music, Heart, X, Trash2, Gift } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -219,73 +219,95 @@ export default function LoveBankScreen() {
         transparent={true}
         onRequestClose={() => setShowAddModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Custom Reward</Text>
-              <TouchableOpacity onPress={() => setShowAddModal(false)}>
-                <X size={24} color={Colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+                <View style={styles.modalContent}>
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Add Custom Reward</Text>
+                    <TouchableOpacity onPress={() => setShowAddModal(false)}>
+                      <X size={24} color={Colors.textSecondary} />
+                    </TouchableOpacity>
+                  </View>
 
-            <Text style={styles.label}>Icon</Text>
-            <View style={styles.iconSelector}>
-              {iconOptions.map((iconOption, index) => {
-                const IconComponent = iconOption.component;
-                return (
-                  <TouchableOpacity
-                    key={index}
-                    style={[styles.iconOption, selectedIcon === index && styles.iconOptionSelected]}
-                    onPress={() => setSelectedIcon(index)}
+                  <ScrollView 
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
                   >
-                    <IconComponent size={24} color={selectedIcon === index ? Colors.accentRose : Colors.textSecondary} />
-                  </TouchableOpacity>
-                );
-              })}
+                    <Text style={styles.label}>Icon</Text>
+                    <View style={styles.iconSelector}>
+                      {iconOptions.map((iconOption, index) => {
+                        const IconComponent = iconOption.component;
+                        return (
+                          <TouchableOpacity
+                            key={index}
+                            style={[styles.iconOption, selectedIcon === index && styles.iconOptionSelected]}
+                            onPress={() => setSelectedIcon(index)}
+                          >
+                            <IconComponent size={24} color={selectedIcon === index ? Colors.accentRose : Colors.textSecondary} />
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+
+                    <Text style={styles.label}>Title</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="e.g., Movie Night, Spa Day"
+                      placeholderTextColor={Colors.mediumGray}
+                      value={newRewardTitle}
+                      onChangeText={setNewRewardTitle}
+                      returnKeyType="next"
+                      blurOnSubmit={false}
+                    />
+
+                    <Text style={styles.label}>Description</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="What does this reward include?"
+                      placeholderTextColor={Colors.mediumGray}
+                      value={newRewardDescription}
+                      onChangeText={setNewRewardDescription}
+                      returnKeyType="next"
+                      blurOnSubmit={false}
+                    />
+
+                    <Text style={styles.label}>Category (Optional)</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="e.g., Sweet Gestures, Pampering"
+                      placeholderTextColor={Colors.mediumGray}
+                      value={newRewardCategory}
+                      onChangeText={setNewRewardCategory}
+                      returnKeyType="next"
+                      blurOnSubmit={false}
+                    />
+
+                    <Text style={styles.label}>Points Required</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="e.g., 50"
+                      placeholderTextColor={Colors.mediumGray}
+                      value={newRewardPoints}
+                      onChangeText={setNewRewardPoints}
+                      keyboardType="numeric"
+                      returnKeyType="done"
+                      blurOnSubmit={true}
+                    />
+
+                    <TouchableOpacity style={styles.saveButton} onPress={handleAddReward}>
+                      <Text style={styles.saveButtonText}>Add Reward</Text>
+                    </TouchableOpacity>
+                  </ScrollView>
+                </View>
+              </TouchableWithoutFeedback>
             </View>
-
-            <Text style={styles.label}>Title</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g., Movie Night, Spa Day"
-              placeholderTextColor={Colors.mediumGray}
-              value={newRewardTitle}
-              onChangeText={setNewRewardTitle}
-            />
-
-            <Text style={styles.label}>Description</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="What does this reward include?"
-              placeholderTextColor={Colors.mediumGray}
-              value={newRewardDescription}
-              onChangeText={setNewRewardDescription}
-            />
-
-            <Text style={styles.label}>Category (Optional)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g., Sweet Gestures, Pampering"
-              placeholderTextColor={Colors.mediumGray}
-              value={newRewardCategory}
-              onChangeText={setNewRewardCategory}
-            />
-
-            <Text style={styles.label}>Points Required</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g., 50"
-              placeholderTextColor={Colors.mediumGray}
-              value={newRewardPoints}
-              onChangeText={setNewRewardPoints}
-              keyboardType="numeric"
-            />
-
-            <TouchableOpacity style={styles.saveButton} onPress={handleAddReward}>
-              <Text style={styles.saveButtonText}>Add Reward</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
