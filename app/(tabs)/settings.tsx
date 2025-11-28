@@ -1,16 +1,20 @@
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Palette, Check, Globe, Layout, Heart, Image } from "lucide-react-native";
+import { Palette, Check, Globe, Layout, Heart, Image, Users, ChevronRight } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { usePartner } from "@/contexts/PartnerContext";
 import { THEMES, THEME_KEYS } from "@/constants/themes";
 import { LANGUAGES, LANGUAGE_KEYS } from "@/constants/languages";
+import { useRouter } from "expo-router";
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { currentTheme, colors, changeTheme } = useTheme();
   const { currentLanguage, changeLanguage, t } = useLanguage();
+  const { isPaired, partnerName } = usePartner();
+  const router = useRouter();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.white }]}>
@@ -147,6 +151,36 @@ export default function SettingsScreen() {
               );
             })}
           </View>
+        </View>
+
+        <View style={[styles.section, { 
+          backgroundColor: colors.white,
+          shadowColor: colors.deepSlate,
+          marginTop: 16,
+        }]}>
+          <View style={styles.sectionHeader}>
+            <Users size={24} color={colors.accentRose} />
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Partner Connection</Text>
+          </View>
+          <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
+            {isPaired ? `Connected with ${partnerName || 'your partner'}` : 'Connect with your partner to share progress and goals'}
+          </Text>
+
+          <TouchableOpacity
+            style={[styles.partnerCard, { backgroundColor: colors.lightRose }]}
+            onPress={() => router.push('/partner-pairing' as any)}
+          >
+            <Users size={32} color={colors.accentRose} />
+            <View style={styles.partnerCardInfo}>
+              <Text style={[styles.partnerTitle, { color: colors.textPrimary }]}>
+                {isPaired ? 'Manage Partner' : 'Link Partner'}
+              </Text>
+              <Text style={[styles.partnerDescription, { color: colors.textSecondary }]}>
+                {isPaired ? 'View or unlink your connection' : 'Generate or enter a pairing code'}
+              </Text>
+            </View>
+            <ChevronRight size={24} color={colors.textSecondary} />
+          </TouchableOpacity>
         </View>
 
         <View style={[styles.section, { 
@@ -346,5 +380,23 @@ const styles = StyleSheet.create({
   widgetNoteText: {
     fontSize: 13,
     lineHeight: 20,
+  },
+  partnerCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 20,
+    borderRadius: 16,
+    gap: 16,
+  },
+  partnerCardInfo: {
+    flex: 1,
+  },
+  partnerTitle: {
+    fontSize: 16,
+    fontWeight: "700" as const,
+    marginBottom: 4,
+  },
+  partnerDescription: {
+    fontSize: 14,
   },
 });

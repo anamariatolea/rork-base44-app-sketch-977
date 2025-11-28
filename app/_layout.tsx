@@ -12,6 +12,7 @@ import { PurchaseProvider } from "@/contexts/PurchaseContext";
 import { PhotoStorageProvider } from "@/contexts/PhotoStorageContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { MoodProvider } from "@/contexts/MoodContext";
+import { PartnerProvider } from "@/contexts/PartnerContext";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -66,9 +67,11 @@ export default function RootLayout() {
                 <StreakProvider>
                   <PhotoStorageProvider>
                     <MoodProvider>
-                      <GestureHandlerRootView>
-                        <RootLayoutNav />
-                      </GestureHandlerRootView>
+                      <PartnerProvider>
+                        <GestureHandlerRootView>
+                          <RootLayoutNav />
+                        </GestureHandlerRootView>
+                      </PartnerProvider>
                     </MoodProvider>
                   </PhotoStorageProvider>
                 </StreakProvider>
