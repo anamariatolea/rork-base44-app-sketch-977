@@ -6,14 +6,16 @@ import superjson from "superjson";
 export const trpc = createTRPCReact<AppRouter>();
 
 const getBaseUrl = () => {
-  if (process.env.EXPO_PUBLIC_RORK_API_BASE_URL) {
-    const url = process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
-    console.log('[tRPC] Using base URL:', url);
-    return url;
+  const envUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
+  
+  if (!envUrl) {
+    console.error('[tRPC] CRITICAL: EXPO_PUBLIC_RORK_API_BASE_URL is not set!');
+    console.error('[tRPC] Available env vars:', Object.keys(process.env).filter(k => k.startsWith('EXPO_PUBLIC')));
+    throw new Error('Backend URL not configured. Please restart the development server.');
   }
-
-  console.warn('[tRPC] EXPO_PUBLIC_RORK_API_BASE_URL is not set, using placeholder');
-  return 'http://placeholder.local';
+  
+  console.log('[tRPC] Using base URL:', envUrl);
+  return envUrl;
 };
 
 export const trpcClient = trpc.createClient({
