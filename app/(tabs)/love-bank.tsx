@@ -58,7 +58,16 @@ export default function LoveBankScreen() {
     try {
       const stored = await AsyncStorage.getItem(REWARDS_KEY);
       if (stored) {
-        setRewards(JSON.parse(stored));
+        const parsedRewards = JSON.parse(stored);
+        const rewardsWithIcons = parsedRewards.map((reward: any) => {
+          const iconName = reward.iconName || "Coffee";
+          const iconOption = iconOptions.find(opt => opt.name === iconName);
+          return {
+            ...reward,
+            icon: iconOption ? iconOption.component : Coffee,
+          };
+        });
+        setRewards(rewardsWithIcons);
       } else {
         setRewards(getDefaultRewards());
       }
@@ -72,7 +81,15 @@ export default function LoveBankScreen() {
 
   const saveRewards = async () => {
     try {
-      await AsyncStorage.setItem(REWARDS_KEY, JSON.stringify(rewards));
+      const rewardsToSave = rewards.map((reward) => {
+        const iconName = iconOptions.find(opt => opt.component === reward.icon)?.name || "Coffee";
+        return {
+          ...reward,
+          icon: undefined,
+          iconName,
+        };
+      });
+      await AsyncStorage.setItem(REWARDS_KEY, JSON.stringify(rewardsToSave));
     } catch (error) {
       console.error("Error saving rewards:", error);
     }
@@ -146,6 +163,7 @@ export default function LoveBankScreen() {
       points: Number(newRewardPoints),
       icon: iconOptions[selectedIcon].component,
       category: newRewardCategory || "Custom",
+      claimed: false,
     };
 
     setRewards([...rewards, newReward]);

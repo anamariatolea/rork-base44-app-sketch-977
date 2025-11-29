@@ -103,28 +103,37 @@ export default function MoodHistoryModal({
 }: MoodHistoryModalProps) {
   const { colors } = useTheme();
 
-  const groupByDate = (entries: MoodEntry[]) => {
+  const getWeekKey = (date: Date) => {
+    const startOfWeek = new Date(date);
+    startOfWeek.setDate(date.getDate() - date.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    
+    const formatDate = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return `Week of ${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}`;
+  };
+
+  const groupByWeek = (entries: MoodEntry[]) => {
     const grouped: { [key: string]: MoodEntry[] } = {};
     
     entries.forEach((entry) => {
       const date = new Date(entry.created_at);
-      const dateKey = date.toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      });
+      const weekKey = getWeekKey(date);
       
-      if (!grouped[dateKey]) {
-        grouped[dateKey] = [];
+      if (!grouped[weekKey]) {
+        grouped[weekKey] = [];
       }
-      grouped[dateKey].push(entry);
+      grouped[weekKey].push(entry);
     });
     
     return grouped;
   };
 
-  const groupedMoods = groupByDate(moodHistory);
+  const groupedMoods = groupByWeek(moodHistory);
+
+
 
   return (
     <Modal
@@ -168,10 +177,10 @@ export default function MoodHistoryModal({
                 </Text>
               </View>
             ) : (
-              Object.entries(groupedMoods).map(([date, entries]) => (
-                <View key={date} style={styles.dateGroup}>
+              Object.entries(groupedMoods).map(([week, entries]) => (
+                <View key={week} style={styles.dateGroup}>
                   <Text style={[styles.dateHeader, { color: colors.textSecondary }]}>
-                    {date}
+                    {week}
                   </Text>
                   {entries.map((entry) => {
                     const MoodIcon = getMoodIcon(entry.mood as MoodType);
