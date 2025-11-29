@@ -31,7 +31,7 @@ const iconOptions = [
 
 export default function LoveBankScreen() {
   const insets = useSafeAreaInsets();
-  const { points, spendPoints } = useLoveBank();
+  const { points, spendPoints, isLoaded: pointsLoaded } = useLoveBank();
   const [showAddModal, setShowAddModal] = useState(false);
   const [newRewardTitle, setNewRewardTitle] = useState("");
   const [newRewardDescription, setNewRewardDescription] = useState("");
@@ -40,17 +40,19 @@ export default function LoveBankScreen() {
   const [selectedIcon, setSelectedIcon] = useState(0);
 
   const [rewards, setRewards] = useState<Reward[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [rewardsLoaded, setRewardsLoaded] = useState(false);
 
   useEffect(() => {
     loadRewards();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (isLoaded) {
+    if (rewardsLoaded) {
       saveRewards();
     }
-  }, [rewards, isLoaded]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rewards, rewardsLoaded]);
 
   const loadRewards = async () => {
     try {
@@ -64,7 +66,7 @@ export default function LoveBankScreen() {
       console.error("Error loading rewards:", error);
       setRewards(getDefaultRewards());
     } finally {
-      setIsLoaded(true);
+      setRewardsLoaded(true);
     }
   };
 
@@ -241,6 +243,14 @@ export default function LoveBankScreen() {
       </TouchableOpacity>
     );
   };
+
+  if (!pointsLoaded || !rewardsLoaded) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={[styles.title, { color: Colors.textPrimary }]}>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

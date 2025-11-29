@@ -7,7 +7,6 @@ import {
   Target,
   Gift,
   Sparkles,
-  Camera,
   Settings,
   Users,
   Lightbulb,
@@ -52,13 +51,7 @@ export default function MenuScreen() {
       route: "/spark",
       color: "#FFB74D",
     },
-    {
-      title: "Memories",
-      description: "Your shared photo gallery",
-      icon: Camera,
-      route: "/memories",
-      color: "#64B5F6",
-    },
+
     {
       title: "Compatibility",
       description: "Discover your match score",

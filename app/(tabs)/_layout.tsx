@@ -44,7 +44,7 @@ export default function TabLayout() {
       <Tabs.Screen name="goals" options={{ href: null }} />
       <Tabs.Screen name="love-bank" options={{ href: null }} />
       <Tabs.Screen name="spark" options={{ href: null }} />
-      <Tabs.Screen name="memories" options={{ href: null }} />
+
       <Tabs.Screen name="compatibility" options={{ href: null }} />
       <Tabs.Screen name="vision-board" options={{ href: null }} />
       <Tabs.Screen name="games" options={{ href: null }} />

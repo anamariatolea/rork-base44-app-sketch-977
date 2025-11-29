@@ -53,7 +53,7 @@ function RootLayoutNav() {
       <Stack.Screen name="goals" options={{ headerShown: true, title: "Goals & Rituals" }} />
       <Stack.Screen name="love-bank" options={{ headerShown: true, title: "Love Bank" }} />
       <Stack.Screen name="spark" options={{ headerShown: true, title: "The Spark" }} />
-      <Stack.Screen name="memories" options={{ headerShown: true, title: "Memories" }} />
+
       <Stack.Screen name="compatibility" options={{ headerShown: true, title: "Compatibility Match" }} />
       <Stack.Screen name="vision-board" options={{ headerShown: true, title: "Vision Board" }} />
       <Stack.Screen name="games" options={{ headerShown: true, title: "Games" }} />
