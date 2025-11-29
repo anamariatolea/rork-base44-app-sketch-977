@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Alert, Linking } from "react-native";
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Alert, Linking, KeyboardAvoidingView, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Sparkles, MessageCircle, MapPin, Lightbulb, RefreshCw, Send, Clock, DollarSign } from "lucide-react-native";
 import { useState } from "react";
@@ -120,7 +120,11 @@ export default function SparkScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+    >
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <View style={styles.titleContainer}>
           <Sparkles size={32} color={Colors.accentRose} />
@@ -135,6 +139,7 @@ export default function SparkScreen() {
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.sectionTitle}>What do you need inspiration for?</Text>
 
@@ -221,6 +226,8 @@ export default function SparkScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
+            returnKeyType="next"
+            blurOnSubmit={false}
           />
 
           <TextInput
@@ -232,6 +239,8 @@ export default function SparkScreen() {
             multiline
             numberOfLines={6}
             textAlignVertical="top"
+            returnKeyType="done"
+            blurOnSubmit={true}
           />
 
           <TouchableOpacity
@@ -249,7 +258,7 @@ export default function SparkScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

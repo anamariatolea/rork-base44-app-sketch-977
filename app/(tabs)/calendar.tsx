@@ -14,10 +14,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { X, Clock, MapPin, ChevronLeft, ChevronRight, Trash2 } from "lucide-react-native";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { trpc } from "@/lib/trpc";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type CalendarEvent = {
   id: string;
@@ -48,38 +48,56 @@ export default function CalendarScreen() {
   const [eventEndTime, setEventEndTime] = useState("");
   const [eventLocation, setEventLocation] = useState("");
 
-  const eventsQuery = trpc.calendar.getEvents.useQuery(
-    { userId: user?.id || "", month: currentMonth, year: currentYear },
-    { enabled: !!user }
-  );
+  const [myEvents, setMyEvents] = useState<CalendarEvent[]>([]);
+  const [partnerEvents, setPartnerEvents] = useState<CalendarEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const partnerEventsQuery = trpc.calendar.getPartnerEvents.useQuery(
-    { userId: user?.id || "", month: currentMonth, year: currentYear },
-    { enabled: !!user }
-  );
+  useEffect(() => {
+    loadEvents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentMonth, currentYear, user]);
 
-  const createEventMutation = trpc.calendar.createEvent.useMutation({
-    onSuccess: () => {
-      eventsQuery.refetch();
-      setShowAddEventModal(false);
-      resetForm();
-      Alert.alert("Success", "Event created successfully!");
-    },
-    onError: (error: any) => {
-      Alert.alert("Error", error.message || "Failed to create event");
-    },
-  });
+  const loadEvents = async () => {
+    if (!user?.id) return;
+    try {
+      setIsLoading(true);
+      const eventsKey = `calendar_events_${user.id}`;
+      const stored = await AsyncStorage.getItem(eventsKey);
+      const events = stored ? JSON.parse(stored) : [];
+      
+      const startDate = new Date(currentYear, currentMonth, 1);
+      const endDate = new Date(currentYear, currentMonth + 1, 0);
+      
+      const filtered = events.filter((event: CalendarEvent) => {
+        const eventDate = new Date(event.date);
+        return eventDate >= startDate && eventDate <= endDate;
+      });
+      
+      setMyEvents(filtered);
 
-  const deleteEventMutation = trpc.calendar.deleteEvent.useMutation({
-    onSuccess: () => {
-      eventsQuery.refetch();
-      setShowEventDetailsModal(false);
-      Alert.alert("Success", "Event deleted successfully!");
-    },
-    onError: (error: any) => {
-      Alert.alert("Error", error.message || "Failed to delete event");
-    },
-  });
+      const partnershipKey = `partnership_${user.id}`;
+      const partnershipData = await AsyncStorage.getItem(partnershipKey);
+      if (partnershipData) {
+        const partnership = JSON.parse(partnershipData);
+        const partnerEventsKey = `calendar_events_${partnership.partnerId}`;
+        const partnerStored = await AsyncStorage.getItem(partnerEventsKey);
+        const partnerEventsData = partnerStored ? JSON.parse(partnerStored) : [];
+        
+        const filteredPartner = partnerEventsData.filter((event: CalendarEvent) => {
+          const eventDate = new Date(event.date);
+          return eventDate >= startDate && eventDate <= endDate;
+        });
+        
+        setPartnerEvents(filteredPartner);
+      }
+    } catch (error) {
+      console.error('Error loading events:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const resetForm = () => {
     setEventTitle("");
@@ -99,13 +117,13 @@ export default function CalendarScreen() {
 
   const getEventsForDate = (date: Date) => {
     const dateStr = date.toISOString().split("T")[0];
-    const myEvents = (eventsQuery.data || []).filter((event: CalendarEvent) => 
+    const myEventsForDate = myEvents.filter((event: CalendarEvent) => 
       event.date.startsWith(dateStr)
     );
-    const theirEvents = (partnerEventsQuery.data || []).filter((event: CalendarEvent) => 
+    const theirEventsForDate = partnerEvents.filter((event: CalendarEvent) => 
       event.date.startsWith(dateStr)
     );
-    return { myEvents, theirEvents };
+    return { myEvents: myEventsForDate, theirEvents: theirEventsForDate };
   };
 
   const handleDatePress = (day: number) => {
@@ -119,25 +137,46 @@ export default function CalendarScreen() {
     setShowEventDetailsModal(true);
   };
 
-  const handleCreateEvent = () => {
+  const handleCreateEvent = async () => {
     if (!eventTitle.trim()) {
       Alert.alert("Title Required", "Please enter an event title");
       return;
     }
 
-    if (!selectedDate) return;
+    if (!selectedDate || !user?.id) return;
 
-    const dateStr = selectedDate.toISOString();
+    try {
+      setIsCreating(true);
+      const dateStr = selectedDate.toISOString();
+      
+      const newEvent: CalendarEvent = {
+        id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        user_id: user.id,
+        title: eventTitle,
+        description: eventDescription || undefined,
+        date: dateStr,
+        start_time: eventStartTime || undefined,
+        end_time: eventEndTime || undefined,
+        location: eventLocation || undefined,
+        created_at: new Date().toISOString(),
+      };
 
-    createEventMutation.mutate({
-      userId: user?.id || "",
-      title: eventTitle,
-      description: eventDescription || undefined,
-      date: dateStr,
-      startTime: eventStartTime || undefined,
-      endTime: eventEndTime || undefined,
-      location: eventLocation || undefined,
-    });
+      const eventsKey = `calendar_events_${user.id}`;
+      const stored = await AsyncStorage.getItem(eventsKey);
+      const events = stored ? JSON.parse(stored) : [];
+      events.push(newEvent);
+      await AsyncStorage.setItem(eventsKey, JSON.stringify(events));
+
+      await loadEvents();
+      setShowAddEventModal(false);
+      resetForm();
+      Alert.alert("Success", "Event created successfully!");
+    } catch (error) {
+      console.error('Error creating event:', error);
+      Alert.alert("Error", "Failed to create event");
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const handleDeleteEvent = () => {
@@ -151,7 +190,26 @@ export default function CalendarScreen() {
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => deleteEventMutation.mutate({ eventId: selectedEvent.id }),
+          onPress: async () => {
+            if (!user?.id) return;
+            try {
+              setIsDeleting(true);
+              const eventsKey = `calendar_events_${user.id}`;
+              const stored = await AsyncStorage.getItem(eventsKey);
+              const events = stored ? JSON.parse(stored) : [];
+              const filtered = events.filter((e: CalendarEvent) => e.id !== selectedEvent.id);
+              await AsyncStorage.setItem(eventsKey, JSON.stringify(filtered));
+              
+              await loadEvents();
+              setShowEventDetailsModal(false);
+              Alert.alert("Success", "Event deleted successfully!");
+            } catch (error) {
+              console.error('Error deleting event:', error);
+              Alert.alert("Error", "Failed to delete event");
+            } finally {
+              setIsDeleting(false);
+            }
+          },
         },
       ]
     );
@@ -279,14 +337,14 @@ export default function CalendarScreen() {
             Upcoming Events
           </Text>
 
-          {eventsQuery.isLoading ? (
+          {isLoading ? (
             <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading...</Text>
-          ) : (eventsQuery.data || []).length === 0 ? (
+          ) : myEvents.length === 0 ? (
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
               No events this month. Tap a date to add one!
             </Text>
           ) : (
-            (eventsQuery.data || []).map((event: CalendarEvent) => (
+            myEvents.map((event: CalendarEvent) => (
               <TouchableOpacity
                 key={event.id}
                 style={[styles.eventCard, { backgroundColor: colors.white }]}
@@ -424,10 +482,10 @@ export default function CalendarScreen() {
                   <TouchableOpacity
                     style={[styles.saveButton, { backgroundColor: colors.accentRose }]}
                     onPress={handleCreateEvent}
-                    disabled={createEventMutation.isPending}
+                    disabled={isCreating}
                   >
                     <Text style={[styles.saveButtonText, { color: colors.white }]}>
-                      {createEventMutation.isPending ? "Creating..." : "Create Event"}
+                      {isCreating ? "Creating..." : "Create Event"}
                     </Text>
                   </TouchableOpacity>
                   <View style={{ height: 40 }} />
@@ -502,11 +560,11 @@ export default function CalendarScreen() {
                 <TouchableOpacity
                   style={[styles.deleteButton, { backgroundColor: colors.lightGray }]}
                   onPress={handleDeleteEvent}
-                  disabled={deleteEventMutation.isPending}
+                  disabled={isDeleting}
                 >
                   <Trash2 size={20} color={colors.accentRose} />
                   <Text style={[styles.deleteButtonText, { color: colors.accentRose }]}>
-                    {deleteEventMutation.isPending ? "Deleting..." : "Delete Event"}
+                    {isDeleting ? "Deleting..." : "Delete Event"}
                   </Text>
                 </TouchableOpacity>
               </View>
