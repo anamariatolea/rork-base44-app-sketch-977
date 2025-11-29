@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Gamepad2, Lock, Zap, Brain, HelpCircle, Grid3x3, Heart, ChevronRight } from "lucide-react-native";
+import { Gamepad2, Lock, Zap, Brain, HelpCircle, Grid3x3, Heart, ChevronRight, Sparkles, Flame } from "lucide-react-native";
 import { useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePurchases } from "@/contexts/PurchaseContext";
@@ -29,6 +29,10 @@ export default function GamesScreen() {
         return Grid3x3;
       case "Heart":
         return Heart;
+      case "Flame":
+        return Flame;
+      case "Sparkles":
+        return Sparkles;
       default:
         return Gamepad2;
     }
@@ -52,7 +56,7 @@ export default function GamesScreen() {
     const game = allGames.find((g) => g.id === selectedGame);
     if (!game) return null;
 
-    if (game.id === "this-or-that" && "questions" in game && game.questions) {
+    if ((game.id === "this-or-that" || game.id === "spicy-questions") && "questions" in game && game.questions && typeof game.questions[0] === 'object' && 'question' in game.questions[0]) {
       const currentQ = game.questions[currentQuestionIndex];
       return (
         <View style={styles.gamePlayArea}>
@@ -98,7 +102,7 @@ export default function GamesScreen() {
       );
     }
 
-    if (game.id === "memory-match" && "questions" in game && game.questions && typeof game.questions[currentQuestionIndex] === 'string') {
+    if ((game.id === "memory-match" || game.id === "spicy-questions") && "questions" in game && game.questions && typeof game.questions[currentQuestionIndex] === 'string') {
       const currentQ = game.questions[currentQuestionIndex] as string;
       return (
         <View style={styles.gamePlayArea}>
@@ -137,7 +141,7 @@ export default function GamesScreen() {
       );
     }
 
-    if (game.id === "guess-their-answer" && "scenarios" in game && game.scenarios) {
+    if ((game.id === "guess-their-answer" || game.id === "future-dreaming") && "scenarios" in game && game.scenarios) {
       const currentScenario = game.scenarios[currentQuestionIndex];
       return (
         <View style={styles.gamePlayArea}>
@@ -317,7 +321,7 @@ export default function GamesScreen() {
         )}
 
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-          {hasGamesAccess ? "All Games" : "Free Game"}
+          {hasGamesAccess ? "All Games" : "Free Games"}
         </Text>
 
         {accessibleGames.map((game, index) => {

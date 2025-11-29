@@ -99,6 +99,226 @@ const questions: Question[] = [
       { id: "c", label: "Prefer together time", value: 3 },
     ],
   },
+  {
+    id: "q9",
+    category: "social",
+    question: "How large is your ideal friend circle?",
+    options: [
+      { id: "a", label: "Few close friends", value: 1 },
+      { id: "b", label: "Moderate sized group", value: 2 },
+      { id: "c", label: "Large social network", value: 3 },
+    ],
+  },
+  {
+    id: "q10",
+    category: "social",
+    question: "How do you feel about hosting gatherings?",
+    options: [
+      { id: "a", label: "Prefer being a guest", value: 1 },
+      { id: "b", label: "Occasionally enjoy hosting", value: 2 },
+      { id: "c", label: "Love hosting parties", value: 3 },
+    ],
+  },
+  {
+    id: "q11",
+    category: "lifestyle",
+    question: "What's your ideal vacation style?",
+    options: [
+      { id: "a", label: "Planned itinerary", value: 3 },
+      { id: "b", label: "Loose plan with flexibility", value: 2 },
+      { id: "c", label: "No plans, pure adventure", value: 1 },
+    ],
+  },
+  {
+    id: "q12",
+    category: "lifestyle",
+    question: "How do you approach household chores?",
+    options: [
+      { id: "a", label: "Need things tidy always", value: 3 },
+      { id: "b", label: "Clean regularly, not obsessive", value: 2 },
+      { id: "c", label: "Relaxed about cleanliness", value: 1 },
+    ],
+  },
+  {
+    id: "q13",
+    category: "lifestyle",
+    question: "What's your approach to trying new things?",
+    options: [
+      { id: "a", label: "Prefer familiar experiences", value: 1 },
+      { id: "b", label: "Open to new things occasionally", value: 2 },
+      { id: "c", label: "Always seeking novelty", value: 3 },
+    ],
+  },
+  {
+    id: "q14",
+    category: "lifestyle",
+    question: "How do you handle stress?",
+    options: [
+      { id: "a", label: "Need isolation to cope", value: 1 },
+      { id: "b", label: "Mix of alone time and support", value: 2 },
+      { id: "c", label: "Seek others for support", value: 3 },
+    ],
+  },
+  {
+    id: "q15",
+    category: "lifestyle",
+    question: "What's your preferred sleep schedule?",
+    options: [
+      { id: "a", label: "Night owl, late to bed/rise", value: 1 },
+      { id: "b", label: "Flexible schedule", value: 2 },
+      { id: "c", label: "Early bird, early to bed/rise", value: 3 },
+    ],
+  },
+  {
+    id: "q16",
+    category: "lifestyle",
+    question: "What's your approach to technology use?",
+    options: [
+      { id: "a", label: "Minimal, prefer offline", value: 1 },
+      { id: "b", label: "Balanced tech usage", value: 2 },
+      { id: "c", label: "Very connected, love tech", value: 3 },
+    ],
+  },
+  {
+    id: "q17",
+    category: "social",
+    question: "How do you celebrate special occasions?",
+    options: [
+      { id: "a", label: "Low-key, intimate celebration", value: 1 },
+      { id: "b", label: "Small gathering with close ones", value: 2 },
+      { id: "c", label: "Big party with many people", value: 3 },
+    ],
+  },
+  {
+    id: "q18",
+    category: "social",
+    question: "How do you handle meeting new people?",
+    options: [
+      { id: "a", label: "Anxious, prefer familiar faces", value: 1 },
+      { id: "b", label: "Comfortable after warmup", value: 2 },
+      { id: "c", label: "Excited, love new connections", value: 3 },
+    ],
+  },
+  {
+    id: "q19",
+    category: "communication",
+    question: "How direct are you in communication?",
+    options: [
+      { id: "a", label: "Very direct and straightforward", value: 3 },
+      { id: "b", label: "Balance directness with tact", value: 2 },
+      { id: "c", label: "Indirect, avoid confrontation", value: 1 },
+    ],
+  },
+  {
+    id: "q20",
+    category: "communication",
+    question: "How do you handle criticism?",
+    options: [
+      { id: "a", label: "Take it personally, need time", value: 1 },
+      { id: "b", label: "Consider it, then respond", value: 2 },
+      { id: "c", label: "Welcome feedback openly", value: 3 },
+    ],
+  },
+  {
+    id: "q21",
+    category: "communication",
+    question: "How often do you need deep conversations?",
+    options: [
+      { id: "a", label: "Rarely, prefer light chat", value: 1 },
+      { id: "b", label: "Regularly but not daily", value: 2 },
+      { id: "c", label: "Frequently, very important", value: 3 },
+    ],
+  },
+  {
+    id: "q22",
+    category: "communication",
+    question: "How do you make major decisions?",
+    options: [
+      { id: "a", label: "Rely on intuition and feelings", value: 1 },
+      { id: "b", label: "Mix of logic and emotion", value: 2 },
+      { id: "c", label: "Analytical, weigh all options", value: 3 },
+    ],
+  },
+  {
+    id: "q23",
+    category: "communication",
+    question: "How do you prefer to spend quality time?",
+    options: [
+      { id: "a", label: "Quiet activities side by side", value: 1 },
+      { id: "b", label: "Mix of talking and activities", value: 2 },
+      { id: "c", label: "Deep conversations and sharing", value: 3 },
+    ],
+  },
+  {
+    id: "q24",
+    category: "values",
+    question: "How important is career ambition to you?",
+    options: [
+      { id: "a", label: "Work to live, not top priority", value: 1 },
+      { id: "b", label: "Important but balanced", value: 2 },
+      { id: "c", label: "Very ambitious, career focused", value: 3 },
+    ],
+  },
+  {
+    id: "q25",
+    category: "values",
+    question: "How do you view family involvement?",
+    options: [
+      { id: "a", label: "Keep family at distance", value: 1 },
+      { id: "b", label: "Regular but not constant", value: 2 },
+      { id: "c", label: "Family is central to life", value: 3 },
+    ],
+  },
+  {
+    id: "q26",
+    category: "values",
+    question: "What's your stance on religion/spirituality?",
+    options: [
+      { id: "a", label: "Not important to me", value: 1 },
+      { id: "b", label: "Somewhat important", value: 2 },
+      { id: "c", label: "Very important in my life", value: 3 },
+    ],
+  },
+  {
+    id: "q27",
+    category: "values",
+    question: "How do you approach health and fitness?",
+    options: [
+      { id: "a", label: "Not a major focus", value: 1 },
+      { id: "b", label: "Moderately important", value: 2 },
+      { id: "c", label: "Very high priority", value: 3 },
+    ],
+  },
+  {
+    id: "q28",
+    category: "values",
+    question: "What's your view on having children?",
+    options: [
+      { id: "a", label: "Don't want children", value: 1 },
+      { id: "b", label: "Open to possibility", value: 2 },
+      { id: "c", label: "Definitely want children", value: 3 },
+    ],
+  },
+  {
+    id: "q29",
+    category: "values",
+    question: "How important is personal growth to you?",
+    options: [
+      { id: "a", label: "Content with who I am", value: 1 },
+      { id: "b", label: "Interested in some growth", value: 2 },
+      { id: "c", label: "Constantly seeking improvement", value: 3 },
+    ],
+  },
+  {
+    id: "q30",
+    category: "values",
+    question: "What's your view on compromise in relationships?",
+    options: [
+      { id: "a", label: "Prefer not to compromise much", value: 1 },
+      { id: "b", label: "Willing to meet halfway", value: 2 },
+      { id: "c", label: "Very flexible, compromise easily", value: 3 },
+    ],
+  },
 ];
 
 export default function CompatibilityScreen() {
@@ -214,7 +434,7 @@ Generate suggestions separated by "---". Be specific and practical.`;
       <View style={[styles.infoCard, { backgroundColor: colors.lightRose }]}>
         <Text style={[styles.infoTitle, { color: colors.textPrimary }]}>What to expect:</Text>
         <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-          • 8 quick questions for each partner{"\n"}
+          • 30 questions for each partner{"\n"}
           • AI-powered compatibility analysis{"\n"}
           • Personalized compromise suggestions{"\n"}
           • Team-building recommendations

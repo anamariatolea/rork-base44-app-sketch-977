@@ -9,7 +9,7 @@ import getPartnershipProcedure from "./routes/partners/get-partnership/route";
 import unlinkPartnerProcedure from "./routes/partners/unlink/route";
 import getPartnerMoodsProcedure from "./routes/partners/get-partner-moods/route";
 import { createEventProcedure } from "./routes/calendar/create-event/route";
-import { getEventsProced } from "./routes/calendar/get-events/route";
+import { getEventsProcedure } from "./routes/calendar/get-events/route";
 import { updateEventProcedure } from "./routes/calendar/update-event/route";
 import { deleteEventProcedure } from "./routes/calendar/delete-event/route";
 import { getPartnerEventsProcedure } from "./routes/calendar/get-partner-events/route";
@@ -32,7 +32,7 @@ export const appRouter = createTRPCRouter({
   }),
   calendar: createTRPCRouter({
     createEvent: createEventProcedure,
-    getEvents: getEventsProced,
+    getEvents: getEventsProcedure,
     updateEvent: updateEventProcedure,
     deleteEvent: deleteEventProcedure,
     getPartnerEvents: getPartnerEventsProcedure,

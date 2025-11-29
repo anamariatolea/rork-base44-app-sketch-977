@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert } from "react-native";
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MessageSquare, Lock, Shield, Heart as HeartIcon, Flame, Bandage, Baby, ChevronRight, Shuffle } from "lucide-react-native";
 import { useState } from "react";
@@ -116,7 +116,11 @@ export default function ConversationsScreen() {
     const pack = packs.find((p) => p.id === selectedPack);
 
     return (
-      <View style={[styles.container, { backgroundColor: colors.lightGray }]}>
+      <KeyboardAvoidingView 
+        style={[styles.container, { backgroundColor: colors.lightGray }]}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+      >
         <View style={[styles.header, { paddingTop: insets.top + 16, backgroundColor: colors.white }]}>
           <View style={styles.titleContainer}>
             <MessageSquare size={32} color={pack?.color || colors.accentRose} />
@@ -124,7 +128,12 @@ export default function ConversationsScreen() {
           </View>
         </View>
 
-        <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+        <ScrollView 
+          style={styles.content} 
+          contentContainerStyle={styles.contentContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.questionPlayArea}>
             <Text style={[styles.questionCounter, { color: colors.textSecondary }]}>
               Question {currentQuestionIndex + 1} of {questions.length}
@@ -161,7 +170,7 @@ export default function ConversationsScreen() {
             </TouchableOpacity>
           </View>
         </ScrollView>
-      </View>
+      </KeyboardAvoidingView>
     );
   }
 
