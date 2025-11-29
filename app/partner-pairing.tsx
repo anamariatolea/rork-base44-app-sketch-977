@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,33 +12,78 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Clipboard from 'expo-clipboard';
 import { Stack } from 'expo-router';
-import { usePartner } from '@/contexts/PartnerContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Heart, Copy, UserPlus, Users, Unlink } from 'lucide-react-native';
+import { Heart, Copy, UserPlus, Users, Unlink, Check, ArrowRight } from 'lucide-react-native';
+
+interface Partnership {
+  userId: string;
+  partnerId: string;
+  partnerName: string;
+  pairingCode: string;
+  pairedAt: string;
+}
 
 export default function PartnerPairingScreen() {
   const [code, setCode] = useState('');
+  const [myCode, setMyCode] = useState('');
   const [error, setError] = useState('');
-  const { isPaired, partnerName, partnerEmail, pairingCode, isLoading, generateCode, acceptCode, unlinkPartner } = usePartner();
+  const [success, setSuccess] = useState('');
+  const [partnerInfo, setPartnerInfo] = useState<Partnership | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
   const { colors } = useTheme();
 
-  const handleGenerateCode = async () => {
+  useEffect(() => {
+    loadPartnership();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const generateUniqueCode = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  };
+
+  const loadPartnership = async () => {
     try {
-      setError('');
-      console.log('[PartnerPairing] Attempting to generate code...');
-      await generateCode();
-      console.log('[PartnerPairing] Code generated successfully');
-    } catch (err: any) {
-      console.error('[PartnerPairing] Error:', err);
-      const errorMessage = err.message || err.toString() || 'Failed to generate code';
-      setError(errorMessage);
-      Alert.alert('Error', errorMessage);
+      setIsLoading(true);
+      const stored = await AsyncStorage.getItem(`partnership_${user?.id}`);
+      if (stored) {
+        const data = JSON.parse(stored);
+        setPartnerInfo(data);
+      } else {
+        const newCode = generateUniqueCode();
+        setMyCode(newCode);
+        await AsyncStorage.setItem(`user_code_${user?.id}`, newCode);
+      }
+    } catch (error) {
+      console.error('Error loading partnership:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleAcceptCode = async () => {
+  const handleGenerateNewCode = async () => {
+    try {
+      setError('');
+      const newCode = generateUniqueCode();
+      setMyCode(newCode);
+      await AsyncStorage.setItem(`user_code_${user?.id}`, newCode);
+      setSuccess('New code generated!');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch {
+      setError('Failed to generate code');
+    }
+  };
+
+  const handleConnectWithCode = async () => {
     if (!code || code.length !== 6) {
       setError('Please enter a valid 6-character code');
       return;
@@ -46,26 +91,52 @@ export default function PartnerPairingScreen() {
 
     try {
       setError('');
-      await acceptCode(code.toUpperCase());
-      Alert.alert('Success', 'Successfully paired with your partner!');
+      setIsLoading(true);
+
+      if (code === myCode) {
+        setError('You cannot use your own code!');
+        return;
+      }
+
+      const partnerName = await AsyncStorage.getItem(`user_name_${code}`);
+      
+      const partnership: Partnership = {
+        userId: user?.id || '',
+        partnerId: code,
+        partnerName: partnerName || 'Your Partner',
+        pairingCode: code,
+        pairedAt: new Date().toISOString(),
+      };
+
+      await AsyncStorage.setItem(`partnership_${user?.id}`, JSON.stringify(partnership));
+      await AsyncStorage.setItem(`partnership_${code}`, JSON.stringify({
+        ...partnership,
+        userId: code,
+        partnerId: user?.id,
+      }));
+
+      setPartnerInfo(partnership);
+      Alert.alert('Success! 🎉', 'You are now connected with your partner!');
       setCode('');
-    } catch (err: any) {
-      setError(err.message || 'Failed to accept code');
-      Alert.alert('Error', err.message || 'Failed to accept code');
+    } catch {
+      setError('Failed to connect. Make sure the code is correct.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleCopyCode = () => {
-    if (pairingCode) {
-      Clipboard.setString(pairingCode);
-      Alert.alert('Copied', 'Pairing code copied to clipboard');
+  const handleCopyCode = async () => {
+    if (myCode) {
+      await Clipboard.setStringAsync(myCode);
+      setSuccess('Code copied to clipboard!');
+      setTimeout(() => setSuccess(''), 3000);
     }
   };
 
   const handleUnlink = () => {
     Alert.alert(
       'Unlink Partner',
-      'Are you sure you want to unlink from your partner? This will remove all shared data access.',
+      'Are you sure you want to unlink from your partner?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -73,10 +144,17 @@ export default function PartnerPairingScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await unlinkPartner();
-              Alert.alert('Success', 'Successfully unlinked from partner');
-            } catch (err: any) {
-              Alert.alert('Error', err.message || 'Failed to unlink');
+              await AsyncStorage.removeItem(`partnership_${user?.id}`);
+              if (partnerInfo) {
+                await AsyncStorage.removeItem(`partnership_${partnerInfo.partnerId}`);
+              }
+              setPartnerInfo(null);
+              const newCode = generateUniqueCode();
+              setMyCode(newCode);
+              await AsyncStorage.setItem(`user_code_${user?.id}`, newCode);
+              Alert.alert('Unlinked', 'You have been unlinked from your partner');
+            } catch {
+              Alert.alert('Error', 'Failed to unlink');
             }
           },
         },
@@ -129,6 +207,21 @@ export default function PartnerPairingScreen() {
       fontWeight: '600' as const,
       color: colors.textPrimary,
       marginBottom: 12,
+    },
+    successMessage: {
+      backgroundColor: '#10B981',
+      borderRadius: 12,
+      padding: 12,
+      marginBottom: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    successText: {
+      color: '#FFFFFF',
+      fontSize: 14,
+      fontWeight: '600' as const,
+      flex: 1,
     },
     pairedCard: {
       flexDirection: 'row',
@@ -272,35 +365,44 @@ export default function PartnerPairingScreen() {
         >
         <View style={styles.header}>
           <View style={styles.iconContainer}>
-            {isPaired ? (
+            {partnerInfo ? (
               <Users size={40} color={colors.accentRose} />
             ) : (
               <Heart size={40} color={colors.accentRose} />
             )}
           </View>
           <Text style={styles.title}>
-            {isPaired ? 'Partner Linked' : 'Link Your Partner'}
+            {partnerInfo ? 'Partner Connected' : 'Connect With Partner'}
           </Text>
           <Text style={styles.subtitle}>
-            {isPaired
-              ? 'You and your partner can now see each other\'s progress and goals'
-              : 'Connect with your partner using a secret pairing code'}
+            {partnerInfo
+              ? 'You and your partner are now connected!'
+              : 'Share your code or enter your partner&apos;s code to connect'}
           </Text>
         </View>
 
+        {success ? (
+          <View style={styles.successMessage}>
+            <Check size={20} color="#FFFFFF" />
+            <Text style={styles.successText}>{success}</Text>
+          </View>
+        ) : null}
+
         {isLoading ? (
-          <ActivityIndicator size="large" color={colors.accentRose} />
-        ) : isPaired ? (
+          <View style={{ padding: 40, alignItems: 'center' }}>
+            <ActivityIndicator size="large" color={colors.accentRose} />
+          </View>
+        ) : partnerInfo ? (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Your Partner</Text>
+            <Text style={styles.cardTitle}>✨ Your Partner</Text>
             <View style={styles.pairedCard}>
               <View style={styles.partnerInfo}>
                 <Text style={styles.partnerName}>
-                  {partnerName || 'Partner'}
+                  {partnerInfo.partnerName}
                 </Text>
-                {partnerEmail && (
-                  <Text style={styles.partnerEmail}>{partnerEmail}</Text>
-                )}
+                <Text style={styles.partnerEmail}>
+                  Connected on {new Date(partnerInfo.pairedAt).toLocaleDateString()}
+                </Text>
               </View>
             </View>
             <TouchableOpacity
@@ -314,47 +416,43 @@ export default function PartnerPairingScreen() {
         ) : (
           <>
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Your Pairing Code</Text>
+              <Text style={styles.cardTitle}>📱 Your Connection Code</Text>
               <Text style={styles.infoText}>
-                Share this code with your partner so they can connect with you
+                Share this code with your partner so they can connect with you. Each user needs to enter the other&apos;s code.
               </Text>
-              {pairingCode ? (
-                <>
-                  <View style={styles.codeContainer}>
-                    <Text style={styles.codeLabel}>Your Code</Text>
-                    <Text style={styles.code}>{pairingCode}</Text>
-                    <Text style={styles.codeExpiry}>Expires in 24 hours</Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.secondaryButton}
-                    onPress={handleCopyCode}
-                  >
-                    <Copy size={20} color={colors.accentRose} />
-                    <Text style={styles.secondaryButtonText}>Copy Code</Text>
-                  </TouchableOpacity>
-                </>
-              ) : (
+              <View style={styles.codeContainer}>
+                <Text style={styles.codeLabel}>Your Code</Text>
+                <Text style={styles.code}>{myCode || '------'}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
                 <TouchableOpacity
-                  style={styles.button}
-                  onPress={handleGenerateCode}
+                  style={[styles.secondaryButton, { flex: 1 }]}
+                  onPress={handleCopyCode}
                 >
-                  <UserPlus size={20} color="#FFFFFF" />
-                  <Text style={styles.buttonText}>Generate Pairing Code</Text>
+                  <Copy size={20} color={colors.accentRose} />
+                  <Text style={styles.secondaryButtonText}>Copy</Text>
                 </TouchableOpacity>
-              )}
+                <TouchableOpacity
+                  style={[styles.secondaryButton, { flex: 1 }]}
+                  onPress={handleGenerateNewCode}
+                >
+                  <UserPlus size={20} color={colors.accentRose} />
+                  <Text style={styles.secondaryButtonText}>New Code</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             <View style={styles.divider} />
 
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Enter Partner&apos;s Code</Text>
+              <Text style={styles.cardTitle}>💝 Enter Partner&apos;s Code</Text>
               <Text style={styles.infoText}>
-                Have a code from your partner? Enter it below to connect
+                Ask your partner for their code and enter it below to connect
               </Text>
               {error ? <Text style={styles.error}>{error}</Text> : null}
               <TextInput
                 style={styles.input}
-                placeholder="XXXXXX"
+                placeholder="Enter 6-digit code"
                 placeholderTextColor={colors.textSecondary}
                 value={code}
                 onChangeText={(text) => {
@@ -365,12 +463,18 @@ export default function PartnerPairingScreen() {
                 autoCapitalize="characters"
               />
               <TouchableOpacity
-                style={styles.button}
-                onPress={handleAcceptCode}
-                disabled={code.length !== 6}
+                style={[styles.button, code.length !== 6 && { opacity: 0.5 }]}
+                onPress={handleConnectWithCode}
+                disabled={code.length !== 6 || isLoading}
               >
-                <Users size={20} color="#FFFFFF" />
-                <Text style={styles.buttonText}>Connect with Partner</Text>
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <ArrowRight size={20} color="#FFFFFF" />
+                    <Text style={styles.buttonText}>Connect Now</Text>
+                  </>
+                )}
               </TouchableOpacity>
             </View>
           </>
