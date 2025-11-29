@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Palette, Check, Globe, Layout, Heart, Image, Users, ChevronRight } from "lucide-react-native";
+import { Palette, Check, Globe, Layout, Heart, Users, ChevronRight } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -193,7 +193,7 @@ export default function SettingsScreen() {
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Widget Setup</Text>
           </View>
           <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
-            Configure app widgets for your home screen to display daily affirmations and memories.
+            Configure app widgets for your home screen to display daily affirmations.
           </Text>
 
           <View style={styles.widgetOptions}>
@@ -212,20 +212,7 @@ export default function SettingsScreen() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.widgetOption, { backgroundColor: colors.lightRose }]}
-              onPress={() => Alert.alert(
-                "Memories Widget",
-                "To add the Memories widget:\n\n1. Long-press on your home screen\n2. Tap the '+' button (iOS) or 'Widgets' (Android)\n3. Search for 'Us & Co'\n4. Select 'Memories' widget\n5. Tap 'Add Widget'\n\nThe widget will cycle through your shared memories!",
-                [{ text: "Got it!", style: "default" }]
-              )}
-            >
-              <Image size={32} color={colors.accentRose} />
-              <View style={styles.widgetInfo}>
-                <Text style={[styles.widgetTitle, { color: colors.textPrimary }]}>Shared Memories</Text>
-                <Text style={[styles.widgetDescription, { color: colors.textSecondary }]}>View your favorite moments</Text>
-              </View>
-            </TouchableOpacity>
+
           </View>
 
           <View style={[styles.widgetNote, { backgroundColor: colors.lightGray }]}>
