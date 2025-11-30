@@ -48,12 +48,14 @@ export const trpcClient = trpc.createClient({
           return response;
         } catch (error: any) {
           console.error('[tRPC] Fetch error:', error.message || 'Unknown error');
-          console.error('[tRPC] Fetch error details:', JSON.stringify({
+          console.error('[tRPC] Error type:', error.constructor?.name || 'Unknown');
+          console.error('[tRPC] Error details:', {
             message: error.message,
             name: error.name,
             cause: error.cause,
-            code: error.code
-          }, null, 2));
+            code: error.code,
+            stack: error.stack?.substring(0, 200)
+          });
           
           return new Response(JSON.stringify({
             error: { 

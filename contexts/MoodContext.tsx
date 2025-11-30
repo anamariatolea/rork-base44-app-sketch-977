@@ -38,6 +38,12 @@ export const [MoodProvider, useMood] = createContextHook(() => {
     }
   );
 
+  useEffect(() => {
+    if (moodHistoryQuery.error) {
+      console.error('[MoodContext] History query error:', moodHistoryQuery.error.message);
+    }
+  }, [moodHistoryQuery.error]);
+
   const latestMoodQuery = trpc.moods.latest.useQuery(
     { userId: user?.id || '' },
     { 
@@ -46,6 +52,12 @@ export const [MoodProvider, useMood] = createContextHook(() => {
       retryOnMount: false,
     }
   );
+
+  useEffect(() => {
+    if (latestMoodQuery.error) {
+      console.error('[MoodContext] Latest mood query error:', latestMoodQuery.error.message);
+    }
+  }, [latestMoodQuery.error]);
 
   const recordMoodMutation = trpc.moods.record.useMutation({
     onSuccess: () => {
