@@ -9,9 +9,10 @@ const getBaseUrl = () => {
   const envUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
   
   if (!envUrl) {
-    console.warn('[tRPC] WARNING: EXPO_PUBLIC_RORK_API_BASE_URL is not set. Backend features will be limited.');
-    console.warn('[tRPC] Available env vars:', Object.keys(process.env).filter(k => k.startsWith('EXPO_PUBLIC')));
-    return 'http://localhost:8081';
+    console.error('[tRPC] ERROR: EXPO_PUBLIC_RORK_API_BASE_URL is not set.');
+    console.error('[tRPC] Backend features will not work. Please contact support.');
+    console.log('[tRPC] Available env vars:', Object.keys(process.env).filter(k => k.startsWith('EXPO_PUBLIC')));
+    return null;
   }
   
   console.log('[tRPC] Using base URL:', envUrl);
@@ -21,9 +22,16 @@ const getBaseUrl = () => {
 export const trpcClient = trpc.createClient({
   links: [
     httpLink({
-      url: `${getBaseUrl()}/api/trpc`,
+      url: `${getBaseUrl() || 'http://localhost:8081'}/api/trpc`,
       transformer: superjson,
       fetch: async (url, options) => {
+        const baseUrl = getBaseUrl();
+        
+        if (!baseUrl) {
+          console.error('[tRPC] Cannot make request - base URL is not configured');
+          throw new Error('Backend is not configured. Please check your environment settings or contact support.');
+        }
+        
         console.log('[tRPC] Fetching URL:', url);
         console.log('[tRPC] Request method:', options?.method);
         console.log('[tRPC] Request body:', options?.body ? String(options.body).substring(0, 200) : 'none');
@@ -38,10 +46,10 @@ export const trpcClient = trpc.createClient({
             console.error('[tRPC] Error response body:', text.substring(0, 1000));
             
             if (response.status === 404) {
-              throw new Error(`Endpoint not found (404). Check if backend is deployed at: ${getBaseUrl()}`);
+              throw new Error(`Backend endpoint not found. The server may not be running or the URL is incorrect.`);
             }
             
-            throw new Error(`HTTP ${response.status}: ${text || response.statusText}`);
+            throw new Error(`Backend error (${response.status}): ${text || response.statusText}`);
           }
           
           const clonedResponse = response.clone();
@@ -53,8 +61,14 @@ export const trpcClient = trpc.createClient({
           console.error('[tRPC] Fetch error details:', {
             message: error.message,
             stack: error.stack,
-            name: error.name
+            name: error.name,
+            type: error.constructor.name
           });
+          
+          if (error.message.includes('Network request failed') || error.name === 'TypeError') {
+            throw new Error('Unable to connect to the server. Please check your internet connection or try again later.');
+          }
+          
           throw error;
         }
       },
