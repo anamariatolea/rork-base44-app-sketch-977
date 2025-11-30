@@ -5,15 +5,21 @@ import superjson from "superjson";
 
 export const trpc = createTRPCReact<AppRouter>();
 
+let hasLoggedBackendStatus = false;
+
 const getBaseUrl = () => {
   const envUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
   
-  if (!envUrl) {
-    return null;
+  if (!hasLoggedBackendStatus) {
+    if (envUrl) {
+      console.log('[tRPC] ✅ Backend configured:', envUrl);
+    } else {
+      console.log('[tRPC] ℹ️  Backend not configured - running in local-only mode');
+    }
+    hasLoggedBackendStatus = true;
   }
   
-  console.log('[tRPC] Backend configured:', envUrl);
-  return envUrl;
+  return envUrl || null;
 };
 
 export const trpcClient = trpc.createClient({
@@ -25,11 +31,10 @@ export const trpcClient = trpc.createClient({
         const baseUrl = getBaseUrl();
         
         if (!baseUrl) {
-          console.warn('[tRPC] Backend not configured - operation will be skipped');
           return new Response(JSON.stringify({
-            error: { code: 'BACKEND_NOT_CONFIGURED', message: 'Backend not configured' }
+            result: { data: null }
           }), {
-            status: 503,
+            status: 200,
             headers: { 'Content-Type': 'application/json' }
           });
         }
@@ -49,13 +54,12 @@ export const trpcClient = trpc.createClient({
         } catch (error: any) {
           console.error('[tRPC] Fetch error:', error.message || 'Unknown error');
           console.error('[tRPC] Error type:', error.constructor?.name || 'Unknown');
-          console.error('[tRPC] Error details:', {
+          console.error('[tRPC] Error details:', JSON.stringify({
             message: error.message,
             name: error.name,
             cause: error.cause,
             code: error.code,
-            stack: error.stack?.substring(0, 200)
-          });
+          }, null, 2));
           
           return new Response(JSON.stringify({
             error: { 
