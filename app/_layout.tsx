@@ -19,7 +19,23 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      retryOnMount: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      staleTime: 1000 * 60 * 5,
+    },
+    mutations: {
+      retry: false,
+      onError: (error: any) => {
+        console.error('[QueryClient] Mutation error:', error.message);
+      },
+    },
+  },
+});
 
 function RootLayoutNav() {
   const { user, loading, initialized } = useAuth();

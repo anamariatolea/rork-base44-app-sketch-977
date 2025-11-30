@@ -99,7 +99,13 @@ export const [MoodProvider, useMood] = createContextHook(() => {
     console.log('[MoodContext] Recording mood:', { mood, userId: user.id, backend: backendEnabled });
     setCurrentMood(mood);
     
-    await saveLocalMood(mood, note, user.id);
+    try {
+      await saveLocalMood(mood, note, user.id);
+      console.log('[MoodContext] Mood saved locally');
+    } catch (error: any) {
+      console.error('[MoodContext] Failed to save mood locally:', error);
+      throw error;
+    }
     
     if (backendEnabled) {
       try {
@@ -109,7 +115,7 @@ export const [MoodProvider, useMood] = createContextHook(() => {
           note,
         });
       } catch (error: any) {
-        console.log('[MoodContext] Backend sync skipped:', error.message);
+        console.log('[MoodContext] Backend sync skipped - continuing with local save:', error.message);
       }
     }
   };

@@ -28,7 +28,12 @@ export const trpcClient = trpc.createClient({
         
         if (!baseUrl) {
           console.warn('[tRPC] Backend not configured - operation will be skipped');
-          throw new Error('BACKEND_NOT_CONFIGURED');
+          return new Response(JSON.stringify({
+            error: { code: 'BACKEND_NOT_CONFIGURED', message: 'Backend not configured' }
+          }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' }
+          });
         }
         
         console.log('[tRPC] Making request to:', url.toString().substring(0, 100));
@@ -39,20 +44,26 @@ export const trpcClient = trpc.createClient({
           if (!response.ok) {
             const text = await response.text();
             console.error('[tRPC] Error response:', response.status, text.substring(0, 200));
-            
-            throw new Error(`Backend error (${response.status}): ${text || response.statusText}`);
           }
           
-          console.log('[tRPC] Request successful');
+          console.log('[tRPC] Request completed:', response.status);
           return response;
         } catch (error: any) {
-          console.error('[tRPC] Request failed:', error.message);
+          console.error('[tRPC] Fetch error:', {
+            message: error.message,
+            name: error.name,
+            stack: error.stack?.substring(0, 200)
+          });
           
-          if (error.message.includes('Network request failed') || error.name === 'TypeError') {
-            throw new Error('BACKEND_UNAVAILABLE');
-          }
-          
-          throw error;
+          return new Response(JSON.stringify({
+            error: { 
+              code: 'NETWORK_ERROR', 
+              message: error.message || 'Network request failed'
+            }
+          }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' }
+          });
         }
       },
     }),
