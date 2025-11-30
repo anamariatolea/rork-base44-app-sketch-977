@@ -6,14 +6,11 @@ import { useTheme } from "@/contexts/ThemeContext";
 import {
   Target,
   Gift,
-  Sparkles,
   Settings,
   Users,
   Lightbulb,
-  Gamepad2,
   MessageSquare,
   ShieldQuestion,
-  Zap,
   ChevronRight,
 } from "lucide-react-native";
 
@@ -45,14 +42,6 @@ export default function MenuScreen() {
       color: "#C9A0DC",
     },
     {
-      title: "The Spark",
-      description: "Get date ideas and inspiration",
-      icon: Sparkles,
-      route: "/spark",
-      color: "#FFB74D",
-    },
-
-    {
       title: "Compatibility",
       description: "Discover your match score",
       icon: Users,
@@ -67,13 +56,6 @@ export default function MenuScreen() {
       color: "#FFD54F",
     },
     {
-      title: "Games",
-      description: "Fun games for couples",
-      icon: Gamepad2,
-      route: "/games",
-      color: "#81C784",
-    },
-    {
       title: "Deep Conversations",
       description: "Meaningful discussion prompts",
       icon: MessageSquare,
@@ -86,13 +68,6 @@ export default function MenuScreen() {
       icon: ShieldQuestion,
       route: "/conflict-repair",
       color: "#F06292",
-    },
-    {
-      title: "Spark Challenges",
-      description: "Daily relationship challenges",
-      icon: Zap,
-      route: "/spark-challenges",
-      color: "#FFB300",
     },
     {
       title: "Settings",

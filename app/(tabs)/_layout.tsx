@@ -50,14 +50,10 @@ export default function TabLayout() {
       />
       <Tabs.Screen name="goals" options={{ href: null }} />
       <Tabs.Screen name="love-bank" options={{ href: null }} />
-      <Tabs.Screen name="spark" options={{ href: null }} />
-
       <Tabs.Screen name="compatibility" options={{ href: null }} />
       <Tabs.Screen name="vision-board" options={{ href: null }} />
-      <Tabs.Screen name="games" options={{ href: null }} />
       <Tabs.Screen name="conversations" options={{ href: null }} />
       <Tabs.Screen name="conflict-repair" options={{ href: null }} />
-      <Tabs.Screen name="spark-challenges" options={{ href: null }} />
       <Tabs.Screen name="settings" options={{ href: null }} />
     </Tabs>
   );
