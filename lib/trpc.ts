@@ -9,8 +9,6 @@ const getBaseUrl = () => {
   const envUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
   
   if (!envUrl) {
-    console.warn('[tRPC] Backend URL not configured - using local storage fallback');
-    console.warn('[tRPC] To enable backend features, ensure EXPO_PUBLIC_RORK_API_BASE_URL is set');
     return null;
   }
   
@@ -49,11 +47,13 @@ export const trpcClient = trpc.createClient({
           console.log('[tRPC] Request completed:', response.status);
           return response;
         } catch (error: any) {
-          console.error('[tRPC] Fetch error:', {
+          console.error('[tRPC] Fetch error:', error.message || 'Unknown error');
+          console.error('[tRPC] Fetch error details:', JSON.stringify({
             message: error.message,
             name: error.name,
-            stack: error.stack?.substring(0, 200)
-          });
+            cause: error.cause,
+            code: error.code
+          }, null, 2));
           
           return new Response(JSON.stringify({
             error: { 

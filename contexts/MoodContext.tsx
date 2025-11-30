@@ -108,15 +108,19 @@ export const [MoodProvider, useMood] = createContextHook(() => {
     }
     
     if (backendEnabled) {
+      console.log('[MoodContext] Syncing mood to backend');
       try {
         await recordMoodMutation.mutateAsync({
           userId: user.id,
           mood,
           note,
         });
+        console.log('[MoodContext] Backend sync successful');
       } catch (error: any) {
-        console.log('[MoodContext] Backend sync skipped - continuing with local save:', error.message);
+        console.log('[MoodContext] Backend sync failed - continuing with local save:', error.message);
       }
+    } else {
+      console.log('[MoodContext] Backend not configured - using local storage only');
     }
   };
 
