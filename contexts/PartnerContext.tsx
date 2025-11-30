@@ -20,14 +20,18 @@ interface PartnerActions {
   refreshPartnership: () => Promise<void>;
 }
 
+const isBackendAvailable = () => {
+  return !!process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
+};
+
 export const [PartnerProvider, usePartner] = createContextHook(() => {
   const { user } = useAuth();
+  const backendEnabled = isBackendAvailable();
 
   const partnershipQuery = trpc.partners.getPartnership.useQuery(
     { userId: user?.id || '' },
     {
-      enabled: !!user?.id,
-      refetchInterval: 30000,
+      enabled: false,
       retry: false,
       retryOnMount: false,
     }
@@ -35,23 +39,41 @@ export const [PartnerProvider, usePartner] = createContextHook(() => {
 
   const generateCodeMutation = trpc.partners.generateCode.useMutation({
     onSuccess: () => {
-      partnershipQuery.refetch();
+      if (backendEnabled) {
+        partnershipQuery.refetch();
+      }
+    },
+    onError: (error) => {
+      console.error('[PartnerContext] Error generating code:', error.message);
     },
   });
 
   const acceptCodeMutation = trpc.partners.acceptCode.useMutation({
     onSuccess: () => {
-      partnershipQuery.refetch();
+      if (backendEnabled) {
+        partnershipQuery.refetch();
+      }
+    },
+    onError: (error) => {
+      console.error('[PartnerContext] Error accepting code:', error.message);
     },
   });
 
   const unlinkMutation = trpc.partners.unlink.useMutation({
     onSuccess: () => {
-      partnershipQuery.refetch();
+      if (backendEnabled) {
+        partnershipQuery.refetch();
+      }
+    },
+    onError: (error) => {
+      console.error('[PartnerContext] Error unlinking:', error.message);
     },
   });
 
   const generateCode = async () => {
+    if (!backendEnabled) {
+      throw new Error('Backend not available. Partner linking requires backend connection.');
+    }
     if (!user?.id) {
       throw new Error('User not authenticated');
     }
@@ -66,6 +88,9 @@ export const [PartnerProvider, usePartner] = createContextHook(() => {
   };
 
   const acceptCode = async (code: string) => {
+    if (!backendEnabled) {
+      throw new Error('Backend not available. Partner linking requires backend connection.');
+    }
     if (!user?.id) {
       throw new Error('User not authenticated');
     }
@@ -73,6 +98,9 @@ export const [PartnerProvider, usePartner] = createContextHook(() => {
   };
 
   const unlinkPartner = async () => {
+    if (!backendEnabled) {
+      throw new Error('Backend not available. Partner linking requires backend connection.');
+    }
     if (!user?.id) {
       throw new Error('User not authenticated');
     }
@@ -80,7 +108,9 @@ export const [PartnerProvider, usePartner] = createContextHook(() => {
   };
 
   const refreshPartnership = async () => {
-    await partnershipQuery.refetch();
+    if (backendEnabled) {
+      await partnershipQuery.refetch();
+    }
   };
 
   const partnership = partnershipQuery.data;

@@ -2,7 +2,6 @@ import createContextHook from '@nkzw/create-context-hook';
 import { useAuth } from './AuthContext';
 import { trpc } from '@/lib/trpc';
 import { useState, useEffect } from 'react';
-import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type MoodType = "happy" | "neutral" | "sad" | "tired" | "exciting" | "busy";
@@ -33,7 +32,7 @@ export const [MoodProvider, useMood] = createContextHook(() => {
   const moodHistoryQuery = trpc.moods.history.useQuery(
     { userId: user?.id || '', limit: 50 },
     { 
-      enabled: !!user && backendEnabled,
+      enabled: false,
       retry: false,
       retryOnMount: false,
     }
@@ -42,7 +41,7 @@ export const [MoodProvider, useMood] = createContextHook(() => {
   const latestMoodQuery = trpc.moods.latest.useQuery(
     { userId: user?.id || '' },
     { 
-      enabled: !!user && backendEnabled,
+      enabled: false,
       retry: false,
       retryOnMount: false,
     }
@@ -51,11 +50,13 @@ export const [MoodProvider, useMood] = createContextHook(() => {
   const recordMoodMutation = trpc.moods.record.useMutation({
     onSuccess: () => {
       console.log('[MoodContext] Mood recorded successfully to backend');
-      moodHistoryQuery.refetch();
-      latestMoodQuery.refetch();
+      if (backendEnabled) {
+        moodHistoryQuery.refetch();
+        latestMoodQuery.refetch();
+      }
     },
     onError: (error) => {
-      console.error('[MoodContext] Error recording mood to backend:', error);
+      console.error('[MoodContext] Backend error:', error.message);
     },
   });
 
@@ -67,11 +68,6 @@ export const [MoodProvider, useMood] = createContextHook(() => {
 
   useEffect(() => {
     const loadLocalData = async () => {
-      if (backendEnabled) {
-        setIsLocalLoading(false);
-        return;
-      }
-
       try {
         console.log('[MoodContext] Loading local mood data');
         const storedMood = await AsyncStorage.getItem(MOOD_STORAGE_KEY);
@@ -92,7 +88,7 @@ export const [MoodProvider, useMood] = createContextHook(() => {
     };
 
     loadLocalData();
-  }, [backendEnabled]);
+  }, []);
 
   const recordMood = async (mood: MoodType, note?: string) => {
     if (!user) {
@@ -103,6 +99,8 @@ export const [MoodProvider, useMood] = createContextHook(() => {
     console.log('[MoodContext] Recording mood:', { mood, userId: user.id, backend: backendEnabled });
     setCurrentMood(mood);
     
+    await saveLocalMood(mood, note, user.id);
+    
     if (backendEnabled) {
       try {
         await recordMoodMutation.mutateAsync({
@@ -110,12 +108,9 @@ export const [MoodProvider, useMood] = createContextHook(() => {
           mood,
           note,
         });
-      } catch {
-        console.error('[MoodContext] Backend unavailable, falling back to local storage');
-        await saveLocalMood(mood, note, user.id);
+      } catch (error: any) {
+        console.log('[MoodContext] Backend sync skipped:', error.message);
       }
-    } else {
-      await saveLocalMood(mood, note, user.id);
     }
   };
 
@@ -135,21 +130,18 @@ export const [MoodProvider, useMood] = createContextHook(() => {
       const updatedHistory = [newEntry, ...localMoodHistory].slice(0, 50);
       setLocalMoodHistory(updatedHistory);
       await AsyncStorage.setItem(MOOD_HISTORY_KEY, JSON.stringify(updatedHistory));
+      console.log('[MoodContext] Mood saved successfully');
     } catch (error) {
       console.error('[MoodContext] Error saving local mood:', error);
-      Alert.alert(
-        'Error',
-        'Unable to save your mood. Please try again.',
-        [{ text: 'OK' }]
-      );
+      throw error;
     }
   };
 
   return {
     currentMood,
     recordMood,
-    moodHistory: backendEnabled ? (moodHistoryQuery.data || []) : localMoodHistory,
-    isLoading: backendEnabled ? (moodHistoryQuery.isLoading || latestMoodQuery.isLoading) : isLocalLoading,
-    isRecording: backendEnabled ? recordMoodMutation.isPending : false,
+    moodHistory: backendEnabled && moodHistoryQuery.data ? moodHistoryQuery.data : localMoodHistory,
+    isLoading: isLocalLoading,
+    isRecording: recordMoodMutation.isPending,
   };
 });
