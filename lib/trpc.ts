@@ -52,14 +52,21 @@ export const trpcClient = trpc.createClient({
           console.log('[tRPC] Request completed:', response.status);
           return response;
         } catch (error: any) {
-          console.error('[tRPC] Fetch error:', error.message || 'Unknown error');
-          console.error('[tRPC] Error type:', error.constructor?.name || 'Unknown');
-          console.error('[tRPC] Error details:', JSON.stringify({
-            message: error.message,
-            name: error.name,
-            cause: error.cause,
-            code: error.code,
-          }, null, 2));
+          const errorMessage = error?.message || String(error) || 'Unknown error';
+          console.error('[tRPC] Fetch error:', errorMessage);
+          console.error('[tRPC] Error type:', error?.constructor?.name || typeof error);
+          
+          try {
+            console.error('[tRPC] Error details:', JSON.stringify({
+              message: error?.message,
+              name: error?.name,
+              cause: error?.cause,
+              code: error?.code,
+              stack: error?.stack?.substring(0, 200),
+            }, null, 2));
+          } catch {
+            console.error('[tRPC] Could not stringify error details');
+          }
           
           return new Response(JSON.stringify({
             error: { 
