@@ -14,6 +14,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { MoodProvider } from "@/contexts/MoodContext";
 import { PartnerProvider } from "@/contexts/PartnerContext";
 import { LoveBankProvider } from "@/contexts/LoveBankContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -24,33 +25,39 @@ function RootLayoutNav() {
   const { user, loading, initialized } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-  const [isNavigationReady, setIsNavigationReady] = React.useState(false);
 
   useEffect(() => {
     console.log('[RootLayoutNav] Auth state:', { initialized, loading, hasUser: !!user, segments });
     
-    if (!initialized || loading) {
+    if (!initialized) {
       console.log('[RootLayoutNav] Waiting for auth initialization...');
       return;
     }
 
-    setIsNavigationReady(true);
+    if (loading) {
+      console.log('[RootLayoutNav] Auth is loading...');
+      return;
+    }
 
     const inAuthGroup = segments[0] === 'login' || segments[0] === 'signup';
-    console.log('[RootLayoutNav] In auth group:', inAuthGroup);
+    console.log('[RootLayoutNav] In auth group:', inAuthGroup, 'segments:', segments);
 
     if (!user && !inAuthGroup) {
       console.log('[RootLayoutNav] No user, redirecting to login');
-      router.replace('/login' as any);
+      setTimeout(() => {
+        router.replace('/login' as any);
+      }, 100);
     } else if (user && inAuthGroup) {
       console.log('[RootLayoutNav] User exists, redirecting to home');
-      router.replace('/' as any);
+      setTimeout(() => {
+        router.replace('/' as any);
+      }, 100);
     } else {
       console.log('[RootLayoutNav] Navigation ready, staying on current route');
     }
   }, [user, segments, initialized, loading, router]);
 
-  if (!initialized || loading || !isNavigationReady) {
+  if (!initialized) {
     console.log('[RootLayoutNav] Rendering null - waiting for initialization');
     return null;
   }
@@ -85,30 +92,32 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <LanguageProvider>
-            <ThemeProvider>
-              <PurchaseProvider>
-                <StreakProvider>
-                  <PhotoStorageProvider>
-                    <MoodProvider>
-                      <PartnerProvider>
-                        <LoveBankProvider>
-                          <GestureHandlerRootView style={{ flex: 1 }}>
-                            <RootLayoutNav />
-                          </GestureHandlerRootView>
-                        </LoveBankProvider>
-                      </PartnerProvider>
-                    </MoodProvider>
-                  </PhotoStorageProvider>
-                </StreakProvider>
-              </PurchaseProvider>
-            </ThemeProvider>
-          </LanguageProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </trpc.Provider>
+    <ErrorBoundary>
+      <trpc.Provider client={trpcClient} queryClient={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <LanguageProvider>
+              <ThemeProvider>
+                <PurchaseProvider>
+                  <StreakProvider>
+                    <PhotoStorageProvider>
+                      <MoodProvider>
+                        <PartnerProvider>
+                          <LoveBankProvider>
+                            <GestureHandlerRootView style={{ flex: 1 }}>
+                              <RootLayoutNav />
+                            </GestureHandlerRootView>
+                          </LoveBankProvider>
+                        </PartnerProvider>
+                      </MoodProvider>
+                    </PhotoStorageProvider>
+                  </StreakProvider>
+                </PurchaseProvider>
+              </ThemeProvider>
+            </LanguageProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </trpc.Provider>
+    </ErrorBoundary>
   );
 }

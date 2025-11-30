@@ -19,12 +19,20 @@ export const [MoodProvider, useMood] = createContextHook(() => {
 
   const moodHistoryQuery = trpc.moods.history.useQuery(
     { userId: user?.id || '', limit: 50 },
-    { enabled: !!user }
+    { 
+      enabled: !!user,
+      retry: false,
+      retryOnMount: false,
+    }
   );
 
   const latestMoodQuery = trpc.moods.latest.useQuery(
     { userId: user?.id || '' },
-    { enabled: !!user }
+    { 
+      enabled: !!user,
+      retry: false,
+      retryOnMount: false,
+    }
   );
 
   const recordMoodMutation = trpc.moods.record.useMutation({

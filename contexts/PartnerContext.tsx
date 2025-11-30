@@ -28,6 +28,8 @@ export const [PartnerProvider, usePartner] = createContextHook(() => {
     {
       enabled: !!user?.id,
       refetchInterval: 30000,
+      retry: false,
+      retryOnMount: false,
     }
   );
 
