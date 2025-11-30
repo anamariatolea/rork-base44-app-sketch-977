@@ -9,7 +9,7 @@ type PointsData = {
 
 const POINTS_KEY = "love_bank_points";
 
-export const [LoveBankContext, useLoveBank] = createContextHook(() => {
+export const [LoveBankProvider, useLoveBank] = createContextHook(() => {
   const [points, setPoints] = useState<PointsData>({
     myPoints: 125,
     partnerPoints: 98,
