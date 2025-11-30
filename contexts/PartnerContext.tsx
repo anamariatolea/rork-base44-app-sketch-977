@@ -31,7 +31,7 @@ export const [PartnerProvider, usePartner] = createContextHook(() => {
   const partnershipQuery = trpc.partners.getPartnership.useQuery(
     { userId: user?.id || '' },
     {
-      enabled: false,
+      enabled: backendEnabled && !!user?.id,
       retry: false,
       retryOnMount: false,
     }

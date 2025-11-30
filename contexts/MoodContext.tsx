@@ -32,7 +32,7 @@ export const [MoodProvider, useMood] = createContextHook(() => {
   const moodHistoryQuery = trpc.moods.history.useQuery(
     { userId: user?.id || '', limit: 50 },
     { 
-      enabled: false,
+      enabled: backendEnabled && !!user?.id,
       retry: false,
       retryOnMount: false,
     }
@@ -41,7 +41,7 @@ export const [MoodProvider, useMood] = createContextHook(() => {
   const latestMoodQuery = trpc.moods.latest.useQuery(
     { userId: user?.id || '' },
     { 
-      enabled: false,
+      enabled: backendEnabled && !!user?.id,
       retry: false,
       retryOnMount: false,
     }
