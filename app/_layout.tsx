@@ -27,22 +27,35 @@ function RootLayoutNav() {
   const [isNavigationReady, setIsNavigationReady] = React.useState(false);
 
   useEffect(() => {
-    if (!initialized || loading) return;
+    console.log('[RootLayoutNav] Auth state:', { initialized, loading, hasUser: !!user, segments });
+    
+    if (!initialized || loading) {
+      console.log('[RootLayoutNav] Waiting for auth initialization...');
+      return;
+    }
 
     setIsNavigationReady(true);
 
     const inAuthGroup = segments[0] === 'login' || segments[0] === 'signup';
+    console.log('[RootLayoutNav] In auth group:', inAuthGroup);
 
     if (!user && !inAuthGroup) {
+      console.log('[RootLayoutNav] No user, redirecting to login');
       router.replace('/login' as any);
     } else if (user && inAuthGroup) {
+      console.log('[RootLayoutNav] User exists, redirecting to home');
       router.replace('/' as any);
+    } else {
+      console.log('[RootLayoutNav] Navigation ready, staying on current route');
     }
   }, [user, segments, initialized, loading, router]);
 
   if (!initialized || loading || !isNavigationReady) {
+    console.log('[RootLayoutNav] Rendering null - waiting for initialization');
     return null;
   }
+
+  console.log('[RootLayoutNav] Rendering Stack navigation');
 
   return (
     <Stack screenOptions={{ headerBackTitle: "Back" }}>

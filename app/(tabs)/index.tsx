@@ -10,15 +10,26 @@ import MoodHistoryModal from "@/components/MoodHistoryModal";
 import { useRouter } from "expo-router";
 
 export default function HeartbeatScreen() {
+  console.log('[HeartbeatScreen] Component rendering');
+  
   const insets = useSafeAreaInsets();
+  console.log('[HeartbeatScreen] Safe area insets:', insets);
+  
   const { colors } = useTheme();
+  console.log('[HeartbeatScreen] Theme loaded');
+  
   const { streak, recordActivity } = useStreak();
+  console.log('[HeartbeatScreen] Streak loaded:', streak);
+  
   const { currentMood, recordMood, moodHistory } = useMood();
+  console.log('[HeartbeatScreen] Mood loaded:', { currentMood, historyLength: moodHistory.length });
+  
   const [partnerMood] = useState<MoodType>("happy");
   const [showMoodHistory, setShowMoodHistory] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
+    console.log('[HeartbeatScreen] Recording activity');
     recordActivity();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -38,12 +49,21 @@ export default function HeartbeatScreen() {
   const totalGoals = dailyGoals.length;
 
   const handleMoodPress = async (mood: MoodType) => {
-    await recordMood(mood);
+    try {
+      console.log('[HeartbeatScreen] Recording mood:', mood);
+      await recordMood(mood);
+    } catch (error) {
+      console.error('[HeartbeatScreen] Error recording mood:', error);
+    }
   };
 
   const handleGetIdea = () => {
-    console.log("Navigating to Spark tab");
-    router.push("/spark" as any);
+    try {
+      console.log('[HeartbeatScreen] Navigating to Spark tab');
+      router.push("/spark" as any);
+    } catch (error) {
+      console.error('[HeartbeatScreen] Error navigating to spark:', error);
+    }
   };
 
   const MoodButton = ({ mood, icon: Icon, label, isSelected, onPress }: any) => (

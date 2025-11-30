@@ -32,12 +32,15 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     let mounted = true;
 
     const initializeAuth = async () => {
+      console.log('[AuthContext] Initializing auth...');
       if (!isSupabaseConfigured || !supabase) {
-        console.warn('Supabase is not configured. Using local demo mode.');
+        console.log('[AuthContext] Supabase is not configured. Using local demo mode.');
         
         let localUserId = await AsyncStorage.getItem(LOCAL_USER_KEY);
+        console.log('[AuthContext] Local user ID:', localUserId);
         if (!localUserId) {
           localUserId = `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          console.log('[AuthContext] Generated new local user ID:', localUserId);
           await AsyncStorage.setItem(LOCAL_USER_KEY, localUserId);
         }
 
@@ -51,6 +54,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         } as User;
 
         if (mounted) {
+          console.log('[AuthContext] Setting local auth state with mock user:', mockUser.id);
           setAuthState({
             user: mockUser,
             session: null,
@@ -58,6 +62,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
             initialized: true,
           });
         }
+        console.log('[AuthContext] Auth initialization complete (local mode)');
         return;
       }
 
@@ -102,8 +107,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           });
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        console.error('[AuthContext] Error initializing auth:', error);
         if (mounted) {
+          console.log('[AuthContext] Setting auth state to null due to error');
           setAuthState({
             user: null,
             session: null,
@@ -112,6 +118,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           });
         }
       }
+      console.log('[AuthContext] Auth initialization complete');
     };
 
     initializeAuth();
