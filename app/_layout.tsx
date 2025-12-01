@@ -31,7 +31,10 @@ const queryClient = new QueryClient({
     mutations: {
       retry: false,
       onError: (error: any) => {
-        console.error('[QueryClient] Mutation error:', error.message);
+        console.error('[QueryClient] Mutation error:', {
+          message: error?.message || 'Unknown error',
+          name: error?.name,
+        });
       },
     },
   },
@@ -105,6 +108,34 @@ function RootLayoutNav() {
 export default function RootLayout() {
   useEffect(() => {
     SplashScreen.hideAsync();
+    
+    const errorHandler = (event: ErrorEvent) => {
+      console.error('[Global Error Handler]', {
+        message: event.error?.message || event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+      });
+    };
+    
+    const unhandledRejectionHandler = (event: PromiseRejectionEvent) => {
+      console.error('[Unhandled Promise Rejection]', {
+        reason: event.reason?.message || event.reason,
+        promise: event.promise,
+      });
+    };
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('error', errorHandler);
+      window.addEventListener('unhandledrejection', unhandledRejectionHandler as any);
+    }
+    
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('error', errorHandler);
+        window.removeEventListener('unhandledrejection', unhandledRejectionHandler as any);
+      }
+    };
   }, []);
 
   return (

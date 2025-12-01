@@ -40,7 +40,10 @@ export const [MoodProvider, useMood] = createContextHook(() => {
 
   useEffect(() => {
     if (moodHistoryQuery.error) {
-      console.error('[MoodContext] History query error:', moodHistoryQuery.error.message);
+      console.error('[MoodContext] History query error:', {
+        message: moodHistoryQuery.error.message,
+        data: moodHistoryQuery.error.data,
+      });
     }
   }, [moodHistoryQuery.error]);
 
@@ -55,7 +58,10 @@ export const [MoodProvider, useMood] = createContextHook(() => {
 
   useEffect(() => {
     if (latestMoodQuery.error) {
-      console.error('[MoodContext] Latest mood query error:', latestMoodQuery.error.message);
+      console.error('[MoodContext] Latest mood query error:', {
+        message: latestMoodQuery.error.message,
+        data: latestMoodQuery.error.data,
+      });
     }
   }, [latestMoodQuery.error]);
 

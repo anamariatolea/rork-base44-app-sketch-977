@@ -44,7 +44,10 @@ export const [PartnerProvider, usePartner] = createContextHook(() => {
       }
     },
     onError: (error) => {
-      console.error('[PartnerContext] Error generating code:', error.message);
+      console.error('[PartnerContext] Error generating code:', {
+        message: error.message,
+        data: error.data,
+      });
     },
   });
 
@@ -55,7 +58,10 @@ export const [PartnerProvider, usePartner] = createContextHook(() => {
       }
     },
     onError: (error) => {
-      console.error('[PartnerContext] Error accepting code:', error.message);
+      console.error('[PartnerContext] Error accepting code:', {
+        message: error.message,
+        data: error.data,
+      });
     },
   });
 
@@ -66,7 +72,10 @@ export const [PartnerProvider, usePartner] = createContextHook(() => {
       }
     },
     onError: (error) => {
-      console.error('[PartnerContext] Error unlinking:', error.message);
+      console.error('[PartnerContext] Error unlinking:', {
+        message: error.message,
+        data: error.data,
+      });
     },
   });
 

@@ -53,15 +53,14 @@ export const trpcClient = trpc.createClient({
           console.log('[tRPC] Request completed:', response.status);
           return response;
         } catch (error: any) {
-          const errorMessage = error?.message || String(error) || 'Unknown error';
-          console.error('[tRPC] Fetch error:', errorMessage);
-          
-          return new Response(JSON.stringify({
-            result: { data: null }
-          }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
+          console.error('[tRPC] Fetch error details:', {
+            message: error?.message || 'Unknown error',
+            name: error?.name,
+            stack: error?.stack?.substring(0, 200),
+            url: url.toString().substring(0, 100),
           });
+          
+          throw error;
         }
       },
     }),
