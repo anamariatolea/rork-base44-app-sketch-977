@@ -7,7 +7,6 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useStreak } from "@/contexts/StreakContext";
 import { useMood, MoodType } from "@/contexts/MoodContext";
 import MoodHistoryModal from "@/components/MoodHistoryModal";
-import { useRouter } from "expo-router";
 
 export default function HeartbeatScreen() {
   console.log('[HeartbeatScreen] Component rendering');
@@ -26,7 +25,6 @@ export default function HeartbeatScreen() {
   
   const [partnerMood] = useState<MoodType>("happy");
   const [showMoodHistory, setShowMoodHistory] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     console.log('[HeartbeatScreen] Recording activity');
@@ -54,15 +52,6 @@ export default function HeartbeatScreen() {
       await recordMood(mood);
     } catch (error) {
       console.error('[HeartbeatScreen] Error recording mood:', error);
-    }
-  };
-
-  const handleGetIdea = () => {
-    try {
-      console.log('[HeartbeatScreen] Navigating to Spark tab');
-      router.push("/spark" as any);
-    } catch (error) {
-      console.error('[HeartbeatScreen] Error navigating to spark:', error);
     }
   };
 
@@ -270,13 +259,6 @@ export default function HeartbeatScreen() {
             </View>
           ))}
         </View>
-
-        <TouchableOpacity 
-          style={[styles.actionButton, { backgroundColor: colors.deepSlate }]}
-          onPress={handleGetIdea}
-        >
-          <Text style={[styles.actionButtonText, { color: colors.white }]}>💡 Get Relationship Ideas</Text>
-        </TouchableOpacity>
 
         <View style={{ height: 40 }} />
       </ScrollView>

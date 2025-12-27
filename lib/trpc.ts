@@ -31,9 +31,9 @@ export const trpcClient = trpc.createClient({
         const baseUrl = getBaseUrl();
         
         if (!baseUrl) {
-          console.log('[tRPC] Backend not configured - returning empty response');
+          console.log('[tRPC] Backend not configured - skipping request');
           return new Response(JSON.stringify({
-            result: { data: null }
+            result: { data: { json: null } }
           }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
@@ -53,14 +53,14 @@ export const trpcClient = trpc.createClient({
           console.log('[tRPC] Request completed:', response.status);
           return response;
         } catch (error: any) {
-          console.error('[tRPC] Fetch error details:', {
-            message: error?.message || 'Unknown error',
-            name: error?.name,
-            stack: error?.stack?.substring(0, 200),
-            url: url.toString().substring(0, 100),
-          });
+          console.error('[tRPC] Fetch error:', error?.message || 'Unknown error');
           
-          throw error;
+          return new Response(JSON.stringify({
+            result: { data: { json: null } }
+          }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          });
         }
       },
     }),

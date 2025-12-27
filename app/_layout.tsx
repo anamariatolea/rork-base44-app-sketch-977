@@ -88,18 +88,6 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="signup" options={{ headerShown: false }} />
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="goals" options={{ headerShown: true, title: "Goals & Rituals" }} />
-      <Stack.Screen name="love-bank" options={{ headerShown: true, title: "Love Bank" }} />
-      <Stack.Screen name="spark" options={{ headerShown: true, title: "The Spark" }} />
-
-      <Stack.Screen name="compatibility" options={{ headerShown: true, title: "Compatibility Match" }} />
-      <Stack.Screen name="vision-board" options={{ headerShown: true, title: "Vision Board" }} />
-      <Stack.Screen name="games" options={{ headerShown: true, title: "Games" }} />
-      <Stack.Screen name="conversations" options={{ headerShown: true, title: "Deep Conversations" }} />
-      <Stack.Screen name="conflict-repair" options={{ headerShown: true, title: "Conflict Repair" }} />
-      <Stack.Screen name="spark-challenges" options={{ headerShown: true, title: "Spark Challenges" }} />
-      <Stack.Screen name="settings" options={{ headerShown: true, title: "Settings" }} />
       <Stack.Screen name="partner-pairing" options={{ headerShown: true, title: "Partner Pairing" }} />
     </Stack>
   );
